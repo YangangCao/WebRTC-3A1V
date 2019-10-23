@@ -248,7 +248,6 @@ void auto_gain(char *in_file, char *out_file) {
 
 int main(int argc, char *argv[]) {
     printf("WebRTC Automatic Gain Control\n");
-    printf("博客:http://cpuimage.cnblogs.com/\n");
     printf("音频自动增益\n");
     if (argc < 2)
         return -1;

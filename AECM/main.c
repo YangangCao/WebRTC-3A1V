@@ -171,7 +171,6 @@ void AECM(char *near_file, char *far_file, char *out_file) {
 
 int main(int argc, char *argv[]) {
     printf("WebRTC Acoustic Echo Canceller for Mobile\n");
-    printf("blog:http://cpuimage.cnblogs.com/\n");
     printf("usage : aecm far_file.wav near_file.wav\n");
     if (argc < 3)
         return -1;

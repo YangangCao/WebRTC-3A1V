@@ -208,7 +208,6 @@ void noise_suppression(char *in_file, char *out_file) {
 
 int main(int argc, char *argv[]) {
     printf("WebRtc Noise Suppression\n");
-    printf("blog:http://cpuimage.cnblogs.com/\n");
     if (argc < 2)
         return -1;
     char *in_file = argv[1];

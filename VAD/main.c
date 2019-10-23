@@ -104,7 +104,6 @@ void vad(char *in_file) {
 
 int main(int argc, char *argv[]) {
     printf("WebRTC Voice Activity Detector\n");
-    printf("博客:http://cpuimage.cnblogs.com/\n");
     printf("静音检测\n");
     if (argc < 2)
         return -1;
