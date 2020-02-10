@@ -149,17 +149,20 @@ static const int32_t kTargetLevelTable[64] = {
         67};
 
 
-static __inline int16_t DivW32W16ResW16(int32_t num, int16_t den) {
+static __inline int16_t DivW32W16ResW16(int32_t num, int16_t den)
+{
     // Guard against division with 0
     return (den != 0) ? (int16_t) (num / den) : (int16_t) 0x7FFF;
 }
 
-static __inline int32_t DivW32W16(int32_t num, int16_t den) {
+static __inline int32_t DivW32W16(int32_t num, int16_t den)
+{
     // Guard against division with 0
     return (den != 0) ? (int32_t) (num / den) : (int32_t) 0x7FFFFFFF;
 }
 
-static __inline uint32_t __clz_uint32(uint32_t v) {
+static __inline uint32_t __clz_uint32(uint32_t v)
+{
 // Never used with input 0
     assert(v > 0);
 #if defined(__INTEL_COMPILER)
@@ -205,21 +208,24 @@ static __inline uint32_t __clz_uint32(uint32_t v) {
 
 // Return the number of steps a can be left-shifted without overflow,
 // or 0 if a == 0.
-static __inline int16_t NormU32(uint32_t a) {
+static __inline int16_t NormU32(uint32_t a)
+{
 
     if (a == 0) return 0;
     return (int16_t) __clz_uint32(a);
 }
 
 
-static __inline int16_t SatW32ToW16(int32_t value32) {
+static __inline int16_t SatW32ToW16(int32_t value32)
+{
     return (int16_t) value32 > 32767 ? (int16_t) 32767 : (value32 < -32768) ? (int16_t) (-32768) : (int16_t) value32;
 }
 
 
 // Return the number of steps a can be left-shifted without overflow,
 // or 0 if a == 0.
-static __inline int16_t NormW32(int32_t a) {
+static __inline int16_t NormW32(int32_t a)
+{
 
     if (a == 0) return 0;
     uint32_t v = (uint32_t) (a < 0 ? ~a : a);
@@ -227,25 +233,29 @@ static __inline int16_t NormW32(int32_t a) {
     return (int16_t) (__clz_uint32(v) - 1);
 }
 
-static __inline int16_t WebRtcSpl_AddSatW16(int16_t a, int16_t b) {
+static __inline int16_t WebRtcSpl_AddSatW16(int16_t a, int16_t b)
+{
     return SatW32ToW16((int32_t) a + (int32_t) b);
 }
 
 int32_t DotProductWithScale(const int16_t *vector1,
                             const int16_t *vector2,
                             size_t length,
-                            int scaling) {
+                            int scaling)
+{
     int64_t sum = 0;
     size_t i = 0;
 
     /* Unroll the loop to improve performance. */
-    for (i = 0; i + 3 < length; i += 4) {
+    for (i = 0; i + 3 < length; i += 4)
+    {
         sum += (vector1[i + 0] * vector2[i + 0]) >> scaling;
         sum += (vector1[i + 1] * vector2[i + 1]) >> scaling;
         sum += (vector1[i + 2] * vector2[i + 2]) >> scaling;
         sum += (vector1[i + 3] * vector2[i + 3]) >> scaling;
     }
-    for (; i < length; i++) {
+    for (; i < length; i++)
+    {
         sum += (vector1[i] * vector2[i]) >> scaling;
     }
 
@@ -253,7 +263,8 @@ int32_t DotProductWithScale(const int16_t *vector1,
 }
 
 
-static float fast_sqrt(float x) {
+static float fast_sqrt(float x)
+{
     float s;
 #if defined(__x86_64__)
     __asm__ __volatile__ ("sqrtss %1, %0" : "=x"(s) : "x"(x));
@@ -269,7 +280,8 @@ static float fast_sqrt(float x) {
 }
 
 static __inline void downsampleBy2(const int16_t *in, size_t len,
-                                   int16_t *out, int32_t *filtState) {
+                                   int16_t *out, int32_t *filtState)
+{
     int32_t tmp1, tmp2, diff, in32, out32;
     size_t i;
 
@@ -282,7 +294,8 @@ static __inline void downsampleBy2(const int16_t *in, size_t len,
     register int32_t state6 = filtState[6];
     register int32_t state7 = filtState[7];
 
-    for (i = (len >> 1); i > 0; i--) {
+    for (i = (len >> 1); i > 0; i--)
+    {
         // lower allpass filter
         in32 = (int32_t) (*in++) * (1 << 10);
         diff = in32 - state1;
@@ -352,7 +365,8 @@ static __inline void downsampleBy2(const int16_t *in, size_t len,
 // zoom on;
 
 // Generator table for y=log2(1+e^x) in Q8.
-enum {
+enum
+{
     kGenFuncTableSize = 128
 };
 static const uint16_t kGenFuncTable[kGenFuncTableSize] = {
@@ -409,7 +423,8 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
     //  tmp32no1 = maxGain * kCompRatio;
     //  zeroGainLvl = digCompGaindB;
     // zeroGainLvl -= WebRtcSpl_DivW32W16ResW16(tmp32no1 + ((kCompRatio - 1) >> 1),      kCompRatio - 1);
-    if ((digCompGaindB <= analogTarget) && (limiterEnable)) {
+    if ((digCompGaindB <= analogTarget) && (limiterEnable))
+    {
         //zeroGainLvl += (analogTarget - digCompGaindB + kSoftLimiterLeft);
         limiterOffset = 0;
     }
@@ -420,7 +435,8 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
     tmp32no1 = digCompGaindB * (kCompRatio - 1);
     diffGain =
             DivW32W16ResW16(tmp32no1 + (kCompRatio >> 1), kCompRatio);
-    if (diffGain < 0 || diffGain >= kGenFuncTableSize) {
+    if (diffGain < 0 || diffGain >= kGenFuncTableSize)
+    {
         assert(0);
         return -1;
     }
@@ -449,7 +465,8 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
     //  den = 20*constMaxGain (in Q8)
     den = ((int32_t) (int16_t) (20) * (uint16_t) (constMaxGain));  // in Q8
 
-    for (i = 0; i < 32; i++) {
+    for (i = 0; i < 32; i++)
+    {
         // Calculate scaled input level (compressor):
         //  inLevel =
         //  fix((-constLog10_2*(compRatio-1)*(1-i)+fix(compRatio/2))/compRatio)
@@ -474,27 +491,35 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
         logApprox = tmpU32no1 >> 8;                                    // Q14
         // Compensate for negative exponent using the relation:
         //  log2(1 + 2^-x) = log2(1 + 2^x) - x
-        if (inLevel < 0) {
+        if (inLevel < 0)
+        {
             zeros = NormU32(absInLevel);
             zerosScale = 0;
-            if (zeros < 15) {
+            if (zeros < 15)
+            {
                 // Not enough space for multiplication
                 tmpU32no2 = absInLevel >> (15 - zeros);                 // Q(zeros-1)
 
 
                 tmpU32no2 = ((uint32_t) ((uint32_t) (tmpU32no2) * (uint16_t) (kLogE_1)));  // Q(zeros+13)
-                if (zeros < 9) {
+                if (zeros < 9)
+                {
                     zerosScale = 9 - zeros;
                     tmpU32no1 >>= zerosScale;  // Q(zeros+13)
-                } else {
+                }
+                else
+                {
                     tmpU32no2 >>= zeros - 9;  // Q22
                 }
-            } else {
+            }
+            else
+            {
                 tmpU32no2 = ((uint32_t) ((uint32_t) (absInLevel) * (uint16_t) (kLogE_1)));  // Q28
                 tmpU32no2 >>= 6;                                         // Q22
             }
             logApprox = 0;
-            if (tmpU32no2 < tmpU32no1) {
+            if (tmpU32no2 < tmpU32no1)
+            {
                 logApprox = (tmpU32no1 - tmpU32no2) >> (8 - zerosScale);  // Q14
             }
         }
@@ -507,7 +532,9 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
         if (numFIX > (den >> 8) || -numFIX > (den >> 8))  // |den| is Q8.
         {
             zeros = NormW32(numFIX);
-        } else {
+        }
+        else
+        {
             zeros = NormW32(den) + 8;
         }
         numFIX *= 1 << zeros;  // Q(14+zeros)
@@ -518,38 +545,48 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
         // This is to do rounding in Q14.
         y32 = y32 >= 0 ? (y32 + 1) >> 1 : -((-y32 + 1) >> 1);
 
-        if (limiterEnable && (i < limiterIdx)) {
+        if (limiterEnable && (i < limiterIdx))
+        {
             tmp32 = ((int32_t) (int16_t) (i - 1) * (uint16_t) (kLog10_2));  // Q14
             tmp32 -= limiterLvl * (1 << 14);                 // Q14
             y32 = DivW32W16(tmp32 + 10, 20);
         }
-        if (y32 > 39000) {
+        if (y32 > 39000)
+        {
             tmp32 = (y32 >> 1) * kLog10 + 4096;  // in Q27
             tmp32 >>= 13;                        // In Q14.
-        } else {
+        }
+        else
+        {
             tmp32 = y32 * kLog10 + 8192;  // in Q28
             tmp32 >>= 14;                 // In Q14.
         }
         tmp32 += 16 << 14;  // in Q14 (Make sure final output is in Q16)
 
         // Calculate power
-        if (tmp32 > 0) {
+        if (tmp32 > 0)
+        {
             intPart = (int16_t) (tmp32 >> 14);
             fracPart = (uint16_t) (tmp32 & 0x00003FFF);  // in Q14
-            if ((fracPart >> 13) != 0) {
+            if ((fracPart >> 13) != 0)
+            {
                 tmp16 = (2 << 14) - constLinApprox;
                 tmp32no2 = (1 << 14) - fracPart;
                 tmp32no2 *= tmp16;
                 tmp32no2 >>= 13;
                 tmp32no2 = (1 << 14) - tmp32no2;
-            } else {
+            }
+            else
+            {
                 tmp16 = constLinApprox - (1 << 14);
                 tmp32no2 = (fracPart * tmp16) >> 13;
             }
             fracPart = (uint16_t) tmp32no2;
             gainTable[i] =
                     (1 << intPart) + SHIFT_W32(fracPart, intPart - 14);
-        } else {
+        }
+        else
+        {
             gainTable[i] = 0;
         }
     }
@@ -557,11 +594,15 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable,       // Q16
     return 0;
 }
 
-int32_t WebRtcAgc_InitDigital(DigitalAgc *stt, int16_t agcMode) {
-    if (agcMode == kAgcModeFixedDigital) {
+int32_t WebRtcAgc_InitDigital(DigitalAgc *stt, int16_t agcMode)
+{
+    if (agcMode == kAgcModeFixedDigital)
+    {
         // start at minimum to find correct gain faster
         stt->capacitorSlow = 0;
-    } else {
+    }
+    else
+    {
         // start out with 0 dB gain
         stt->capacitorSlow = 134217728;  // (int32_t)(0.125f * 32768.0f * 32768.0f);
     }
@@ -582,7 +623,8 @@ int32_t WebRtcAgc_InitDigital(DigitalAgc *stt, int16_t agcMode) {
 
 int32_t WebRtcAgc_AddFarendToDigital(DigitalAgc *stt,
                                      const int16_t *in_far,
-                                     size_t nrSamples) {
+                                     size_t nrSamples)
+{
     assert(stt);
     // VAD for far end
     WebRtcAgc_ProcessVad(&stt->vadFarend, in_far, nrSamples);
@@ -595,7 +637,8 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
                                  size_t num_bands,
                                  int16_t *const *out,
                                  uint32_t FS,
-                                 int16_t lowlevelSignal) {
+                                 int16_t lowlevelSignal)
+{
     // array for gains (one value per ms, incl start & end)
     int32_t gains[11];
 
@@ -614,18 +657,25 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     int16_t L2;  // samples/subframe
 
     // determine number of samples per ms
-    if (FS == 8000) {
+    if (FS == 8000)
+    {
         L = 8;
         L2 = 3;
-    } else if (FS == 16000 || FS == 32000 || FS == 48000) {
+    }
+    else if (FS == 16000 || FS == 32000 || FS == 48000)
+    {
         L = 16;
         L2 = 4;
-    } else {
+    }
+    else
+    {
         return -1;
     }
 
-    for (i = 0; i < num_bands; ++i) {
-        if (in_near[i] != out[i]) {
+    for (i = 0; i < num_bands; ++i)
+    {
+        if (in_near[i] != out[i])
+        {
             // Only needed if they don't already point to the same place.
             memcpy(out[i], in_near[i], 10 * L * sizeof(in_near[i][0]));
         }
@@ -634,7 +684,8 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     logratio = WebRtcAgc_ProcessVad(&stt->vadNearend, out[0], L * 10);
 
     // Account for far end VAD
-    if (stt->vadFarend.counter > 10) {
+    if (stt->vadFarend.counter > 10)
+    {
         tmp32 = 3 * logratio;
         logratio = (int16_t) ((tmp32 - stt->vadFarend.logRatio) >> 2);
     }
@@ -644,12 +695,17 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     //  lower_thr = 0.25f;
     upper_thr = 1024;  // Q10
     lower_thr = 0;     // Q10
-    if (logratio > upper_thr) {
+    if (logratio > upper_thr)
+    {
         // decay = -2^17 / DecayTime;  ->  -65
         decay = -65;
-    } else if (logratio < lower_thr) {
+    }
+    else if (logratio < lower_thr)
+    {
         decay = 0;
-    } else {
+    }
+    else
+    {
         // decay = (int16_t)(((lower_thr - logratio)
         //       * (2^27/(DecayTime*(upper_thr-lower_thr)))) >> 10);
         // SUBSTITUTED: 2^27/(DecayTime*(upper_thr-lower_thr))  ->  65
@@ -659,17 +715,22 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
 
     // adjust decay factor for long silence (detected as low standard deviation)
     // This is only done in the adaptive modes
-    if (stt->agcMode != kAgcModeFixedDigital) {
-        if (stt->vadNearend.stdLongTerm < 4000) {
+    if (stt->agcMode != kAgcModeFixedDigital)
+    {
+        if (stt->vadNearend.stdLongTerm < 4000)
+        {
             decay = 0;
-        } else if (stt->vadNearend.stdLongTerm < 8096) {
+        }
+        else if (stt->vadNearend.stdLongTerm < 8096)
+        {
             // decay = (int16_t)(((stt->vadNearend.stdLongTerm - 4000) * decay) >>
             // 12);
             tmp32 = (stt->vadNearend.stdLongTerm - 4000) * decay;
             decay = (int16_t) (tmp32 >> 12);
         }
 
-        if (lowlevelSignal != 0) {
+        if (lowlevelSignal != 0)
+        {
             decay = 0;
         }
     }
@@ -680,12 +741,15 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
 #endif
     // Find max amplitude per sub frame
     // iterate over sub frames
-    for (k = 0; k < 10; k++) {
+    for (k = 0; k < 10; k++)
+    {
         // iterate over samples
         max_nrg = 0;
-        for (n = 0; n < L; n++) {
+        for (n = 0; n < L; n++)
+        {
             int32_t nrg = out[0][k * L + n] * out[0][k * L + n];
-            if (nrg > max_nrg) {
+            if (nrg > max_nrg)
+            {
                 max_nrg = nrg;
             }
         }
@@ -694,35 +758,44 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
 
     // Calculate gain per sub frame
     gains[0] = stt->gain;
-    for (k = 0; k < 10; k++) {
+    for (k = 0; k < 10; k++)
+    {
         // Fast envelope follower
         //  decay time = -131000 / -1000 = 131 (ms)
         stt->capacitorFast =
                 AGC_SCALEDIFF32(-1000, stt->capacitorFast, stt->capacitorFast);
-        if (env[k] > stt->capacitorFast) {
+        if (env[k] > stt->capacitorFast)
+        {
             stt->capacitorFast = env[k];
         }
         // Slow envelope follower
-        if (env[k] > stt->capacitorSlow) {
+        if (env[k] > stt->capacitorSlow)
+        {
             // increase capacitorSlow
             stt->capacitorSlow = AGC_SCALEDIFF32(500, (env[k] - stt->capacitorSlow),
                                                  stt->capacitorSlow);
-        } else {
+        }
+        else
+        {
             // decrease capacitorSlow
             stt->capacitorSlow =
                     AGC_SCALEDIFF32(decay, stt->capacitorSlow, stt->capacitorSlow);
         }
 
         // use maximum of both capacitors as current level
-        if (stt->capacitorFast > stt->capacitorSlow) {
+        if (stt->capacitorFast > stt->capacitorSlow)
+        {
             cur_level = stt->capacitorFast;
-        } else {
+        }
+        else
+        {
             cur_level = stt->capacitorSlow;
         }
         // Translate signal level into gain, using a piecewise linear approximation
         // find number of leading zeros
         zeros = NormU32((uint32_t) cur_level);
-        if (cur_level == 0) {
+        if (cur_level == 0)
+        {
             zeros = 31;
         }
         tmp32 = ((uint32_t) cur_level << zeros) & 0x7FFFFFFF;
@@ -741,7 +814,8 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     zeros = (zeros << 9) - (frac >> 3);
     // find number of leading zeros
     zeros_fast = NormU32((uint32_t) stt->capacitorFast);
-    if (stt->capacitorFast == 0) {
+    if (stt->capacitorFast == 0)
+    {
         zeros_fast = 31;
     }
     tmp32 = ((uint32_t) stt->capacitorFast << zeros_fast) & 0x7FFFFFFF;
@@ -750,27 +824,38 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
 
     gate = 1000 + zeros_fast - zeros - stt->vadNearend.stdShortTerm;
 
-    if (gate < 0) {
+    if (gate < 0)
+    {
         stt->gatePrevious = 0;
-    } else {
+    }
+    else
+    {
         tmp32 = stt->gatePrevious * 7;
         gate = (int16_t) ((gate + tmp32) >> 3);
         stt->gatePrevious = gate;
     }
     // gate < 0     -> no gate
     // gate > 2500  -> max gate
-    if (gate > 0) {
-        if (gate < 2500) {
+    if (gate > 0)
+    {
+        if (gate < 2500)
+        {
             gain_adj = (2500 - gate) >> 5;
-        } else {
+        }
+        else
+        {
             gain_adj = 0;
         }
-        for (k = 0; k < 10; k++) {
-            if ((gains[k + 1] - stt->gainTable[0]) > 8388608) {
+        for (k = 0; k < 10; k++)
+        {
+            if ((gains[k + 1] - stt->gainTable[0]) > 8388608)
+            {
                 // To prevent wraparound
                 tmp32 = (gains[k + 1] - stt->gainTable[0]) >> 8;
                 tmp32 *= 178 + gain_adj;
-            } else {
+            }
+            else
+            {
                 tmp32 = (gains[k + 1] - stt->gainTable[0]) * (178 + gain_adj);
                 tmp32 >>= 8;
             }
@@ -779,22 +864,28 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     }
 
     // Limit gain to avoid overload distortion
-    for (k = 0; k < 10; k++) {
+    for (k = 0; k < 10; k++)
+    {
         // To prevent wrap around
         zeros = 10;
-        if (gains[k + 1] > 47453132) {
+        if (gains[k + 1] > 47453132)
+        {
             zeros = 16 - NormW32(gains[k + 1]);
         }
         gain32 = (gains[k + 1] >> zeros) + 1;
         gain32 *= gain32;
         // check for overflow
         while (AGC_MUL32((env[k] >> 12) + 1, gain32) >
-               SHIFT_W32((int32_t) 32767, 2 * (1 - zeros + 10))) {
+               SHIFT_W32((int32_t) 32767, 2 * (1 - zeros + 10)))
+        {
             // multiply by 253/256 ==> -0.1 dB
-            if (gains[k + 1] > 8388607) {
+            if (gains[k + 1] > 8388607)
+            {
                 // Prevent wrap around
                 gains[k + 1] = (gains[k + 1] / 256) * 253;
-            } else {
+            }
+            else
+            {
                 gains[k + 1] = (gains[k + 1] * 253) / 256;
             }
             gain32 = (gains[k + 1] >> zeros) + 1;
@@ -802,8 +893,10 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
         }
     }
     // gain reductions should be done 1 ms earlier than gain increases
-    for (k = 1; k < 10; k++) {
-        if (gains[k] > gains[k + 1]) {
+    for (k = 1; k < 10; k++)
+    {
+        if (gains[k] > gains[k + 1])
+        {
             gains[k] = gains[k + 1];
         }
     }
@@ -815,15 +908,22 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     delta = (gains[1] - gains[0]) * (1 << (4 - L2));
     gain32 = gains[0] * (1 << 4);
     // iterate over samples
-    for (n = 0; n < L; n++) {
-        for (i = 0; i < num_bands; ++i) {
+    for (n = 0; n < L; n++)
+    {
+        for (i = 0; i < num_bands; ++i)
+        {
             tmp32 = out[i][n] * ((gain32 + 127) >> 7);
             out_tmp = tmp32 >> 16;
-            if (out_tmp > 4095) {
+            if (out_tmp > 4095)
+            {
                 out[i][n] = (int16_t) 32767;
-            } else if (out_tmp < -4096) {
+            }
+            else if (out_tmp < -4096)
+            {
                 out[i][n] = (int16_t) -32768;
-            } else {
+            }
+            else
+            {
                 tmp32 = out[i][n] * (gain32 >> 4);
                 out[i][n] = (int16_t) (tmp32 >> 16);
             }
@@ -833,19 +933,27 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
         gain32 += delta;
     }
     // iterate over subframes
-    for (k = 1; k < 10; k++) {
+    for (k = 1; k < 10; k++)
+    {
         delta = (gains[k + 1] - gains[k]) * (1 << (4 - L2));
         gain32 = gains[k] * (1 << 4);
         // iterate over samples
-        for (n = 0; n < L; n++) {
-            for (i = 0; i < num_bands; ++i) {
+        for (n = 0; n < L; n++)
+        {
+            for (i = 0; i < num_bands; ++i)
+            {
                 int64_t tmp64 = ((int64_t) (out[i][k * L + n])) * (gain32 >> 4);
                 tmp64 = tmp64 >> 16;
-                if (tmp64 > 32767) {
+                if (tmp64 > 32767)
+                {
                     out[i][k * L + n] = 32767;
-                } else if (tmp64 < -32768) {
+                }
+                else if (tmp64 < -32768)
+                {
                     out[i][k * L + n] = -32768;
-                } else {
+                }
+                else
+                {
                     out[i][k * L + n] = (int16_t) (tmp64);
                 }
             }
@@ -856,7 +964,8 @@ int32_t WebRtcAgc_ProcessDigital(DigitalAgc *stt,
     return 0;
 }
 
-void WebRtcAgc_InitVad(AgcVad *state) {
+void WebRtcAgc_InitVad(AgcVad *state)
+{
     int16_t k;
 
     state->HPstate = 0;   // state of high pass filter
@@ -877,7 +986,8 @@ void WebRtcAgc_InitVad(AgcVad *state) {
     state->stdShortTerm =
             0;               // short-term standard deviation of input level in dB
     state->counter = 3;  // counts updates
-    for (k = 0; k < 8; k++) {
+    for (k = 0; k < 8; k++)
+    {
         // downsampling filter
         state->downState[k] = 0;
     }
@@ -899,10 +1009,13 @@ int16_t WebRtcAgc_ProcessVad(AgcVad *state,      // (i) VAD state
     // process in 10 sub frames of 1 ms (to save on memory)
     nrg = 0;
     HPstate = state->HPstate;
-    for (subfr = 0; subfr < 10; subfr++) {
+    for (subfr = 0; subfr < 10; subfr++)
+    {
         // downsample to 4 kHz
-        if (nrSamples == 160) {
-            for (k = 0; k < 8; k++) {
+        if (nrSamples == 160)
+        {
+            for (k = 0; k < 8; k++)
+            {
                 tmp32 = (int32_t) in[2 * k] + (int32_t) in[2 * k + 1];
                 tmp32 >>= 1;
                 buf1[k] = (int16_t) tmp32;
@@ -910,13 +1023,16 @@ int16_t WebRtcAgc_ProcessVad(AgcVad *state,      // (i) VAD state
             in += 16;
 
             downsampleBy2(buf1, 8, buf2, state->downState);
-        } else {
+        }
+        else
+        {
             downsampleBy2(in, 8, buf2, state->downState);
             in += 8;
         }
 
         // high pass filter and compute energy
-        for (k = 0; k < 4; k++) {
+        for (k = 0; k < 4; k++)
+        {
             out = buf2[k] + HPstate;
             tmp32 = 600 * out;
             HPstate = (int16_t) ((tmp32 >> 10) - buf2[k]);
@@ -931,21 +1047,28 @@ int16_t WebRtcAgc_ProcessVad(AgcVad *state,      // (i) VAD state
     state->HPstate = HPstate;
 
     // find number of leading zeros
-    if (!(0xFFFF0000 & nrg)) {
+    if (!(0xFFFF0000 & nrg))
+    {
         zeros = 16;
-    } else {
+    }
+    else
+    {
         zeros = 0;
     }
-    if (!(0xFF000000 & (nrg << zeros))) {
+    if (!(0xFF000000 & (nrg << zeros)))
+    {
         zeros += 8;
     }
-    if (!(0xF0000000 & (nrg << zeros))) {
+    if (!(0xF0000000 & (nrg << zeros)))
+    {
         zeros += 4;
     }
-    if (!(0xC0000000 & (nrg << zeros))) {
+    if (!(0xC0000000 & (nrg << zeros)))
+    {
         zeros += 2;
     }
-    if (!(0x80000000 & (nrg << zeros))) {
+    if (!(0x80000000 & (nrg << zeros)))
+    {
         zeros += 1;
     }
 
@@ -954,7 +1077,8 @@ int16_t WebRtcAgc_ProcessVad(AgcVad *state,      // (i) VAD state
 
     // Update statistics
 
-    if (state->counter < kAvgDecayTime) {
+    if (state->counter < kAvgDecayTime)
+    {
         // decay time = AvgDecTime * 10 ms
         state->counter++;
     }
@@ -1005,10 +1129,12 @@ int16_t WebRtcAgc_ProcessVad(AgcVad *state,      // (i) VAD state
     state->logRatio = (int16_t) (tmp32 >> 6);
 
     // limit
-    if (state->logRatio > 2048) {
+    if (state->logRatio > 2048)
+    {
         state->logRatio = 2048;
     }
-    if (state->logRatio < -2048) {
+    if (state->logRatio < -2048)
+    {
         state->logRatio = -2048;
     }
 
@@ -1018,7 +1144,8 @@ int16_t WebRtcAgc_ProcessVad(AgcVad *state,      // (i) VAD state
 int WebRtcAgc_AddMic(void *state,
                      int16_t *const *in_mic,
                      size_t num_bands,
-                     size_t samples) {
+                     size_t samples)
+{
     int32_t nrg, max_nrg, sample, tmp32;
     int32_t *ptr;
     uint16_t targetGainIdx, gain;
@@ -1027,20 +1154,26 @@ int WebRtcAgc_AddMic(void *state,
     LegacyAgc *stt;
     stt = (LegacyAgc *) state;
 
-    if (stt->fs == 8000) {
+    if (stt->fs == 8000)
+    {
         L = 8;
-        if (samples != 80) {
+        if (samples != 80)
+        {
             return -1;
         }
-    } else {
+    }
+    else
+    {
         L = 16;
-        if (samples != 160) {
+        if (samples != 160)
+        {
             return -1;
         }
     }
 
     /* apply slowly varying digital gain */
-    if (stt->micVol > stt->maxAnalog) {
+    if (stt->micVol > stt->maxAnalog)
+    {
         /* |maxLevel| is strictly >= |micVol|, so this condition should be
          * satisfied here, ensuring there is no divide-by-zero. */
         assert(stt->maxLevel > stt->maxAnalog);
@@ -1055,45 +1188,63 @@ int WebRtcAgc_AddMic(void *state,
         /* Increment through the table towards the target gain.
          * If micVol drops below maxAnalog, we allow the gain
          * to be dropped immediately. */
-        if (stt->gainTableIdx < targetGainIdx) {
+        if (stt->gainTableIdx < targetGainIdx)
+        {
             stt->gainTableIdx++;
-        } else if (stt->gainTableIdx > targetGainIdx) {
+        }
+        else if (stt->gainTableIdx > targetGainIdx)
+        {
             stt->gainTableIdx--;
         }
 
         /* Q12 */
         gain = kGainTableAnalog[stt->gainTableIdx];
 
-        for (i = 0; i < samples; i++) {
+        for (i = 0; i < samples; i++)
+        {
             size_t j;
-            for (j = 0; j < num_bands; ++j) {
+            for (j = 0; j < num_bands; ++j)
+            {
                 sample = (in_mic[j][i] * gain) >> 12;
-                if (sample > 32767) {
+                if (sample > 32767)
+                {
                     in_mic[j][i] = 32767;
-                } else if (sample < -32768) {
+                }
+                else if (sample < -32768)
+                {
                     in_mic[j][i] = -32768;
-                } else {
+                }
+                else
+                {
                     in_mic[j][i] = (int16_t) sample;
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         stt->gainTableIdx = 0;
     }
 
     /* compute envelope */
-    if (stt->inQueue > 0) {
+    if (stt->inQueue > 0)
+    {
         ptr = stt->env[1];
-    } else {
+    }
+    else
+    {
         ptr = stt->env[0];
     }
 
-    for (i = 0; i < kNumSubframes; i++) {
+    for (i = 0; i < kNumSubframes; i++)
+    {
         /* iterate over samples */
         max_nrg = 0;
-        for (n = 0; n < L; n++) {
+        for (n = 0; n < L; n++)
+        {
             nrg = in_mic[0][i * L + n] * in_mic[0][i * L + n];
-            if (nrg > max_nrg) {
+            if (nrg > max_nrg)
+            {
                 max_nrg = nrg;
             }
         }
@@ -1101,17 +1252,24 @@ int WebRtcAgc_AddMic(void *state,
     }
 
     /* compute energy */
-    if (stt->inQueue > 0) {
+    if (stt->inQueue > 0)
+    {
         ptr = stt->Rxx16w32_array[1];
-    } else {
+    }
+    else
+    {
         ptr = stt->Rxx16w32_array[0];
     }
 
-    for (i = 0; i < kNumSubframes / 2; i++) {
-        if (stt->fs == 16000) {
+    for (i = 0; i < kNumSubframes / 2; i++)
+    {
+        if (stt->fs == 16000)
+        {
             downsampleBy2(&in_mic[0][i * 32], 32, tmp_speech,
                           stt->filterState);
-        } else {
+        }
+        else
+        {
             memcpy(tmp_speech, &in_mic[0][i * 16], 16 * sizeof(short));
         }
         /* Compute energy in blocks of 16 samples */
@@ -1119,9 +1277,12 @@ int WebRtcAgc_AddMic(void *state,
     }
 
     /* update queue information */
-    if (stt->inQueue == 0) {
+    if (stt->inQueue == 0)
+    {
         stt->inQueue = 1;
-    } else {
+    }
+    else
+    {
         stt->inQueue = 2;
     }
 
@@ -1131,7 +1292,8 @@ int WebRtcAgc_AddMic(void *state,
     return 0;
 }
 
-int WebRtcAgc_AddFarend(void *state, const int16_t *in_far, size_t samples) {
+int WebRtcAgc_AddFarend(void *state, const int16_t *in_far, size_t samples)
+{
     LegacyAgc *stt = (LegacyAgc *) state;
 
     int err = WebRtcAgc_GetAddFarendError(state, samples);
@@ -1142,20 +1304,26 @@ int WebRtcAgc_AddFarend(void *state, const int16_t *in_far, size_t samples) {
     return WebRtcAgc_AddFarendToDigital(&stt->digitalAgc, in_far, samples);
 }
 
-int WebRtcAgc_GetAddFarendError(void *state, size_t samples) {
+int WebRtcAgc_GetAddFarendError(void *state, size_t samples)
+{
     LegacyAgc *stt;
     stt = (LegacyAgc *) state;
 
     if (stt == NULL)
         return -1;
 
-    if (stt->fs == 8000) {
+    if (stt->fs == 8000)
+    {
         if (samples != 80)
             return -1;
-    } else if (stt->fs == 16000 || stt->fs == 32000 || stt->fs == 48000) {
+    }
+    else if (stt->fs == 16000 || stt->fs == 32000 || stt->fs == 48000)
+    {
         if (samples != 160)
             return -1;
-    } else {
+    }
+    else
+    {
         return -1;
     }
 
@@ -1167,7 +1335,8 @@ int WebRtcAgc_VirtualMic(void *agcInst,
                          size_t num_bands,
                          size_t samples,
                          int32_t micLevelIn,
-                         int32_t *micLevelOut) {
+                         int32_t *micLevelOut)
+{
     int32_t tmpFlt, micLevelTmp, gainIdx;
     uint16_t gain;
     size_t ii, j;
@@ -1188,15 +1357,18 @@ int WebRtcAgc_VirtualMic(void *agcInst,
      *  The idea is that digital AGC will not adapt to low-level
      *  signals.
      */
-    if (stt->fs != 8000) {
+    if (stt->fs != 8000)
+    {
         frameNrgLimit = frameNrgLimit << 1;
     }
 
     frameNrg = (uint32_t) (in_near[0][0] * in_near[0][0]);
-    for (sampleCntr = 1; sampleCntr < samples; sampleCntr++) {
+    for (sampleCntr = 1; sampleCntr < samples; sampleCntr++)
+    {
         // increment frame energy if it is less than the limit
         // the correct value of the energy is not important
-        if (frameNrg < frameNrgLimit) {
+        if (frameNrg < frameNrgLimit)
+        {
             nrg = (uint32_t) (in_near[0][sampleCntr] * in_near[0][sampleCntr]);
             frameNrg += nrg;
         }
@@ -1206,25 +1378,36 @@ int WebRtcAgc_VirtualMic(void *agcInst,
                 ((in_near[0][sampleCntr] ^ in_near[0][sampleCntr - 1]) < 0);
     }
 
-    if ((frameNrg < 500) || (numZeroCrossing <= 5)) {
+    if ((frameNrg < 500) || (numZeroCrossing <= 5))
+    {
         stt->lowLevelSignal = 1;
-    } else if (numZeroCrossing <= kZeroCrossingLowLim) {
+    }
+    else if (numZeroCrossing <= kZeroCrossingLowLim)
+    {
         stt->lowLevelSignal = 0;
-    } else if (frameNrg <= frameNrgLimit) {
+    }
+    else if (frameNrg <= frameNrgLimit)
+    {
         stt->lowLevelSignal = 1;
-    } else if (numZeroCrossing >= kZeroCrossingHighLim) {
+    }
+    else if (numZeroCrossing >= kZeroCrossingHighLim)
+    {
         stt->lowLevelSignal = 1;
-    } else {
+    }
+    else
+    {
         stt->lowLevelSignal = 0;
     }
 
     micLevelTmp = micLevelIn << stt->scale;
     /* Set desired level */
     gainIdx = stt->micVol;
-    if (stt->micVol > stt->maxAnalog) {
+    if (stt->micVol > stt->maxAnalog)
+    {
         gainIdx = stt->maxAnalog;
     }
-    if (micLevelTmp != stt->micRef) {
+    if (micLevelTmp != stt->micRef)
+    {
         /* Something has happened with the physical level, restart. */
         stt->micRef = micLevelTmp;
         stt->micVol = 127;
@@ -1234,38 +1417,53 @@ int WebRtcAgc_VirtualMic(void *agcInst,
     }
     /* Pre-process the signal to emulate the microphone level. */
     /* Take one step at a time in the gain table. */
-    if (gainIdx > 127) {
+    if (gainIdx > 127)
+    {
         gain = kGainTableVirtualMic[gainIdx - 128];
-    } else {
+    }
+    else
+    {
         gain = kSuppressionTableVirtualMic[127 - gainIdx];
     }
-    for (ii = 0; ii < samples; ii++) {
+    for (ii = 0; ii < samples; ii++)
+    {
         tmpFlt = (in_near[0][ii] * gain) >> 10;
-        if (tmpFlt > 32767) {
+        if (tmpFlt > 32767)
+        {
             tmpFlt = 32767;
             gainIdx--;
-            if (gainIdx >= 127) {
+            if (gainIdx >= 127)
+            {
                 gain = kGainTableVirtualMic[gainIdx - 127];
-            } else {
+            }
+            else
+            {
                 gain = kSuppressionTableVirtualMic[127 - gainIdx];
             }
         }
-        if (tmpFlt < -32768) {
+        if (tmpFlt < -32768)
+        {
             tmpFlt = -32768;
             gainIdx--;
-            if (gainIdx >= 127) {
+            if (gainIdx >= 127)
+            {
                 gain = kGainTableVirtualMic[gainIdx - 127];
-            } else {
+            }
+            else
+            {
                 gain = kSuppressionTableVirtualMic[127 - gainIdx];
             }
         }
         in_near[0][ii] = (int16_t) tmpFlt;
-        for (j = 1; j < num_bands; ++j) {
+        for (j = 1; j < num_bands; ++j)
+        {
             tmpFlt = (in_near[j][ii] * gain) >> 10;
-            if (tmpFlt > 32767) {
+            if (tmpFlt > 32767)
+            {
                 tmpFlt = 32767;
             }
-            if (tmpFlt < -32768) {
+            if (tmpFlt < -32768)
+            {
                 tmpFlt = -32768;
             }
             in_near[j][ii] = (int16_t) tmpFlt;
@@ -1276,13 +1474,15 @@ int WebRtcAgc_VirtualMic(void *agcInst,
     //    *micLevelOut = stt->micGainIdx;
     *micLevelOut = stt->micGainIdx >> stt->scale;
     /* Add to Mic as if it was the output from a true microphone */
-    if (WebRtcAgc_AddMic(agcInst, in_near, num_bands, samples) != 0) {
+    if (WebRtcAgc_AddMic(agcInst, in_near, num_bands, samples) != 0)
+    {
         return -1;
     }
     return 0;
 }
 
-void WebRtcAgc_UpdateAgcThresholds(LegacyAgc *stt) {
+void WebRtcAgc_UpdateAgcThresholds(LegacyAgc *stt)
+{
     int16_t tmp16;
 #ifdef MIC_LEVEL_FEEDBACK
     int zeros;
@@ -1298,10 +1498,12 @@ void WebRtcAgc_UpdateAgcThresholds(LegacyAgc *stt) {
     tmp16 = (DIFF_REF_TO_ANALOG * stt->compressionGaindB) + ANALOG_TARGET_LEVEL_2;
     tmp16 = DivW32W16ResW16((int32_t) tmp16, ANALOG_TARGET_LEVEL);
     stt->analogTarget = DIGITAL_REF_AT_0_COMP_GAIN + tmp16;
-    if (stt->analogTarget < DIGITAL_REF_AT_0_COMP_GAIN) {
+    if (stt->analogTarget < DIGITAL_REF_AT_0_COMP_GAIN)
+    {
         stt->analogTarget = DIGITAL_REF_AT_0_COMP_GAIN;
     }
-    if (stt->agcMode == kAgcModeFixedDigital) {
+    if (stt->agcMode == kAgcModeFixedDigital)
+    {
         /* Adjust for different parameter interpretation in FixedDigital mode */
         stt->analogTarget = stt->compressionGaindB;
     }
@@ -1340,18 +1542,22 @@ void WebRtcAgc_UpdateAgcThresholds(LegacyAgc *stt) {
 
 void WebRtcAgc_SaturationCtrl(LegacyAgc *stt,
                               uint8_t *saturated,
-                              const int32_t *env) {
+                              const int32_t *env)
+{
     int16_t i, tmpW16;
 
     /* Check if the signal is saturated */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i++)
+    {
         tmpW16 = (int16_t) (env[i] >> 20);
-        if (tmpW16 > 875) {
+        if (tmpW16 > 875)
+        {
             stt->envSum += tmpW16;
         }
     }
 
-    if (stt->envSum > 25000) {
+    if (stt->envSum > 25000)
+    {
         *saturated = 1;
         stt->envSum = 0;
     }
@@ -1360,35 +1566,43 @@ void WebRtcAgc_SaturationCtrl(LegacyAgc *stt,
     stt->envSum = (int16_t) ((stt->envSum * 32440) >> 15);
 }
 
-void WebRtcAgc_ZeroCtrl(LegacyAgc *stt, int32_t *inMicLevel, const int32_t *env) {
+void WebRtcAgc_ZeroCtrl(LegacyAgc *stt, int32_t *inMicLevel, const int32_t *env)
+{
     int16_t i;
     int64_t tmp = 0;
     int32_t midVal;
 
     /* Is the input signal zero? */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i++)
+    {
         tmp += env[i];
     }
 
     /* Each block is allowed to have a few non-zero
      * samples.
      */
-    if (tmp < 500) {
+    if (tmp < 500)
+    {
         stt->msZero += 10;
-    } else {
+    }
+    else
+    {
         stt->msZero = 0;
     }
 
-    if (stt->muteGuardMs > 0) {
+    if (stt->muteGuardMs > 0)
+    {
         stt->muteGuardMs -= 10;
     }
 
-    if (stt->msZero > 500) {
+    if (stt->msZero > 500)
+    {
         stt->msZero = 0;
 
         /* Increase microphone level only if it's less than 50% */
         midVal = (stt->maxAnalog + stt->minLevel + 1) / 2;
-        if (*inMicLevel < midVal) {
+        if (*inMicLevel < midVal)
+        {
             /* *inMicLevel *= 1.1; */
             *inMicLevel = (1126 * *inMicLevel) >> 10;
             /* Reduces risk of a muted mic repeatedly triggering excessive levels due
@@ -1414,7 +1628,8 @@ void WebRtcAgc_ZeroCtrl(LegacyAgc *stt, int32_t *inMicLevel, const int32_t *env)
     }
 }
 
-void WebRtcAgc_SpeakerInactiveCtrl(LegacyAgc *stt) {
+void WebRtcAgc_SpeakerInactiveCtrl(LegacyAgc *stt)
+{
     /* Check if the near end speaker is inactive.
      * If that is the case the VAD threshold is
      * increased since the VAD speech model gets
@@ -1425,11 +1640,15 @@ void WebRtcAgc_SpeakerInactiveCtrl(LegacyAgc *stt) {
     int32_t tmp32;
     int16_t vadThresh;
 
-    if (stt->vadMic.stdLongTerm < 2500) {
+    if (stt->vadMic.stdLongTerm < 2500)
+    {
         stt->vadThreshold = 1500;
-    } else {
+    }
+    else
+    {
         vadThresh = kNormalVadThreshold;
-        if (stt->vadMic.stdLongTerm < 4500) {
+        if (stt->vadMic.stdLongTerm < 4500)
+        {
             /* Scale between min and max threshold */
             vadThresh += (4500 - stt->vadMic.stdLongTerm) / 2;
         }
@@ -1440,35 +1659,57 @@ void WebRtcAgc_SpeakerInactiveCtrl(LegacyAgc *stt) {
     }
 }
 
-void WebRtcAgc_ExpCurve(int16_t volume, int16_t *index) {
+void WebRtcAgc_ExpCurve(int16_t volume, int16_t *index)
+{
     // volume in Q14
     // index in [0-7]
     /* 8 different curves */
-    if (volume > 5243) {
-        if (volume > 7864) {
-            if (volume > 12124) {
+    if (volume > 5243)
+    {
+        if (volume > 7864)
+        {
+            if (volume > 12124)
+            {
                 *index = 7;
-            } else {
+            }
+            else
+            {
                 *index = 6;
             }
-        } else {
-            if (volume > 6554) {
+        }
+        else
+        {
+            if (volume > 6554)
+            {
                 *index = 5;
-            } else {
+            }
+            else
+            {
                 *index = 4;
             }
         }
-    } else {
-        if (volume > 2621) {
-            if (volume > 3932) {
+    }
+    else
+    {
+        if (volume > 2621)
+        {
+            if (volume > 3932)
+            {
                 *index = 3;
-            } else {
+            }
+            else
+            {
                 *index = 2;
             }
-        } else {
-            if (volume > 1311) {
+        }
+        else
+        {
+            if (volume > 1311)
+            {
                 *index = 1;
-            } else {
+            }
+            else
+            {
                 *index = 0;
             }
         }
@@ -1480,7 +1721,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                                 int32_t *outMicLevel,
                                 int16_t vadLogRatio,
                                 int16_t echo,
-                                uint8_t *saturationWarning) {
+                                uint8_t *saturationWarning)
+{
     uint32_t tmpU32;
     int32_t Rxx16w32, tmp32;
     int32_t inMicLevelTmp, lastMicVol;
@@ -1491,13 +1733,16 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
     stt = (LegacyAgc *) state;
     inMicLevelTmp = inMicLevel << stt->scale;
 
-    if (inMicLevelTmp > stt->maxAnalog) {
+    if (inMicLevelTmp > stt->maxAnalog)
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "\tAGC->ProcessAnalog, frame %d: micLvl > maxAnalog\n",
                 stt->fcount);
 #endif
         return -1;
-    } else if (inMicLevelTmp < stt->minLevel) {
+    }
+    else if (inMicLevelTmp < stt->minLevel)
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "\tAGC->ProcessAnalog, frame %d: micLvl < minLevel\n",
                 stt->fcount);
@@ -1505,14 +1750,16 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
         return -1;
     }
 
-    if (stt->firstCall == 0) {
+    if (stt->firstCall == 0)
+    {
         int32_t tmpVol;
         stt->firstCall = 1;
         tmp32 = ((stt->maxLevel - stt->minLevel) * 51) >> 9;
         tmpVol = (stt->minLevel + tmp32);
 
         /* If the mic level is very low at start, increase it! */
-        if ((inMicLevelTmp < tmpVol) && (stt->agcMode == kAgcModeAdaptiveAnalog)) {
+        if ((inMicLevelTmp < tmpVol) && (stt->agcMode == kAgcModeAdaptiveAnalog))
+        {
             inMicLevelTmp = tmpVol;
         }
         stt->micVol = inMicLevelTmp;
@@ -1520,12 +1767,14 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
 
     /* Set the mic level to the previous output value if there is digital input
      * gain */
-    if ((inMicLevelTmp == stt->maxAnalog) && (stt->micVol > stt->maxAnalog)) {
+    if ((inMicLevelTmp == stt->maxAnalog) && (stt->micVol > stt->maxAnalog))
+    {
         inMicLevelTmp = stt->micVol;
     }
 
     /* If the mic level was manually changed to a very low value raise it! */
-    if ((inMicLevelTmp != stt->micVol) && (inMicLevelTmp < stt->minOutput)) {
+    if ((inMicLevelTmp != stt->micVol) && (inMicLevelTmp < stt->minOutput))
+    {
         tmp32 = ((stt->maxLevel - stt->minLevel) * 51) >> 9;
         inMicLevelTmp = (stt->minLevel + tmp32);
         stt->micVol = inMicLevelTmp;
@@ -1540,19 +1789,24 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
 #endif
     }
 
-    if (inMicLevelTmp != stt->micVol) {
-        if (inMicLevel == stt->lastInMicLevel) {
+    if (inMicLevelTmp != stt->micVol)
+    {
+        if (inMicLevel == stt->lastInMicLevel)
+        {
             // We requested a volume adjustment, but it didn't occur. This is
             // probably due to a coarse quantization of the volume slider.
             // Restore the requested value to prevent getting stuck.
             inMicLevelTmp = stt->micVol;
-        } else {
+        }
+        else
+        {
             // As long as the value changed, update to match.
             stt->micVol = inMicLevelTmp;
         }
     }
 
-    if (inMicLevelTmp > stt->maxLevel) {
+    if (inMicLevelTmp > stt->maxLevel)
+    {
         // Always allow the user to raise the volume above the maxLevel.
         stt->maxLevel = inMicLevelTmp;
     }
@@ -1568,7 +1822,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
     WebRtcAgc_SaturationCtrl(stt, &saturated, stt->env[0]);
 
     /* The AGC is always allowed to lower the level if the signal is saturated */
-    if (saturated == 1) {
+    if (saturated == 1)
+    {
         /* Lower the recording level
          * Rxx160_LP is adjusted down because it is so slow it could
          * cause the AGC to make wrong decisions. */
@@ -1581,7 +1836,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
         tmp32 = inMicLevelTmp - stt->minLevel;
         tmpU32 = ((uint32_t) ((uint32_t) (29591) * (uint32_t) (tmp32)));
         stt->micVol = (tmpU32 >> 15) + stt->minLevel;
-        if (stt->micVol > lastMicVol - 2) {
+        if (stt->micVol > lastMicVol - 2)
+        {
             stt->micVol = lastMicVol - 2;
         }
         inMicLevelTmp = stt->micVol;
@@ -1592,7 +1848,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                 stt->fcount, stt->micVol);
 #endif
 
-        if (stt->micVol < stt->minOutput) {
+        if (stt->micVol < stt->minOutput)
+        {
             *saturationWarning = 1;
         }
 
@@ -1634,7 +1891,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
      */
     WebRtcAgc_SpeakerInactiveCtrl(stt);
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++)
+    {
         /* Computed on blocks of 16 samples */
 
         Rxx16w32 = stt->Rxx16w32_array[0][i];
@@ -1646,7 +1904,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
 
         /* Circular buffer */
         stt->Rxx16pos++;
-        if (stt->Rxx16pos == RXX_BUFFER_LEN) {
+        if (stt->Rxx16pos == RXX_BUFFER_LEN)
+        {
             stt->Rxx16pos = 0;
         }
 
@@ -1654,20 +1913,25 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
         tmp32 = (Rxx16w32 - stt->Rxx16_LPw32) >> kAlphaShortTerm;
         stt->Rxx16_LPw32 = (stt->Rxx16_LPw32) + tmp32;
 
-        if (vadLogRatio > stt->vadThreshold) {
+        if (vadLogRatio > stt->vadThreshold)
+        {
             /* Speech detected! */
 
             /* Check if Rxx160_LP is in the correct range. If
              * it is too high/low then we set it to the maximum of
              * Rxx16_LPw32 during the first 200ms of speech.
              */
-            if (stt->activeSpeech < 250) {
+            if (stt->activeSpeech < 250)
+            {
                 stt->activeSpeech += 2;
 
-                if (stt->Rxx16_LPw32 > stt->Rxx16_LPw32Max) {
+                if (stt->Rxx16_LPw32 > stt->Rxx16_LPw32Max)
+                {
                     stt->Rxx16_LPw32Max = stt->Rxx16_LPw32;
                 }
-            } else if (stt->activeSpeech == 250) {
+            }
+            else if (stt->activeSpeech == 250)
+            {
                 stt->activeSpeech += 2;
                 tmp32 = stt->Rxx16_LPw32Max >> 3;
                 stt->Rxx160_LPw32 = tmp32 * RXX_BUFFER_LEN;
@@ -1676,12 +1940,14 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
             tmp32 = (stt->Rxx160w32 - stt->Rxx160_LPw32) >> kAlphaLongTerm;
             stt->Rxx160_LPw32 = stt->Rxx160_LPw32 + tmp32;
 
-            if (stt->Rxx160_LPw32 > stt->upperSecondaryLimit) {
+            if (stt->Rxx160_LPw32 > stt->upperSecondaryLimit)
+            {
                 stt->msTooHigh += 2;
                 stt->msTooLow = 0;
                 stt->changeToSlowMode = 0;
 
-                if (stt->msTooHigh > stt->msecSpeechOuterChange) {
+                if (stt->msTooHigh > stt->msecSpeechOuterChange)
+                {
                     stt->msTooHigh = 0;
 
                     /* Lower the recording level */
@@ -1701,7 +1967,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                     tmp32 = inMicLevelTmp - stt->minLevel;
                     tmpU32 = ((uint32_t) ((uint32_t) (31130) * (uint32_t) (tmp32)));
                     stt->micVol = (tmpU32 >> 15) + stt->minLevel;
-                    if (stt->micVol > lastMicVol - 1) {
+                    if (stt->micVol > lastMicVol - 1)
+                    {
                         stt->micVol = lastMicVol - 1;
                     }
                     inMicLevelTmp = stt->micVol;
@@ -1721,12 +1988,15 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                             stt->fcount, stt->micVol, stt->maxLevel);
 #endif
                 }
-            } else if (stt->Rxx160_LPw32 > stt->upperLimit) {
+            }
+            else if (stt->Rxx160_LPw32 > stt->upperLimit)
+            {
                 stt->msTooHigh += 2;
                 stt->msTooLow = 0;
                 stt->changeToSlowMode = 0;
 
-                if (stt->msTooHigh > stt->msecSpeechInnerChange) {
+                if (stt->msTooHigh > stt->msecSpeechInnerChange)
+                {
                     /* Lower the recording level */
                     stt->msTooHigh = 0;
                     /* Multiply by 0.828125 which corresponds to decreasing ~0.8dB */
@@ -1744,7 +2014,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                     //tmp32 = inMicLevelTmp - stt->minLevel;
                     tmpU32 = ((uint32_t) ((uint32_t) (31621) * (uint32_t) ((inMicLevelTmp - stt->minLevel))));
                     stt->micVol = (tmpU32 >> 15) + stt->minLevel;
-                    if (stt->micVol > lastMicVol - 1) {
+                    if (stt->micVol > lastMicVol - 1)
+                    {
                         stt->micVol = lastMicVol - 1;
                     }
                     inMicLevelTmp = stt->micVol;
@@ -1759,12 +2030,15 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                             stt->fcount, stt->micVol, stt->maxLevel);
 #endif
                 }
-            } else if (stt->Rxx160_LPw32 < stt->lowerSecondaryLimit) {
+            }
+            else if (stt->Rxx160_LPw32 < stt->lowerSecondaryLimit)
+            {
                 stt->msTooHigh = 0;
                 stt->changeToSlowMode = 0;
                 stt->msTooLow += 2;
 
-                if (stt->msTooLow > stt->msecSpeechOuterChange) {
+                if (stt->msTooLow > stt->msecSpeechOuterChange)
+                {
                     /* Raise the recording level */
                     int16_t index, weightFIX;
                     int16_t volNormFIX = 16384;  // =1 in Q14.
@@ -1773,7 +2047,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
 
                     /* Normalize the volume level */
                     tmp32 = (inMicLevelTmp - stt->minLevel) << 14;
-                    if (stt->maxInit != stt->minLevel) {
+                    if (stt->maxInit != stt->minLevel)
+                    {
                         volNormFIX = tmp32 / (stt->maxInit - stt->minLevel);
                     }
 
@@ -1792,7 +2067,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                     tmpU32 =
                             ((uint32_t) weightFIX * (uint32_t) (inMicLevelTmp - stt->minLevel));
                     stt->micVol = (tmpU32 >> 14) + stt->minLevel;
-                    if (stt->micVol < lastMicVol + 2) {
+                    if (stt->micVol < lastMicVol + 2)
+                    {
                         stt->micVol = lastMicVol + 2;
                     }
 
@@ -1814,12 +2090,15 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                             stt->fcount, stt->micVol);
 #endif
                 }
-            } else if (stt->Rxx160_LPw32 < stt->lowerLimit) {
+            }
+            else if (stt->Rxx160_LPw32 < stt->lowerLimit)
+            {
                 stt->msTooHigh = 0;
                 stt->changeToSlowMode = 0;
                 stt->msTooLow += 2;
 
-                if (stt->msTooLow > stt->msecSpeechInnerChange) {
+                if (stt->msTooLow > stt->msecSpeechInnerChange)
+                {
                     /* Raise the recording level */
                     int16_t index, weightFIX;
                     int16_t volNormFIX = 16384;  // =1 in Q14.
@@ -1828,7 +2107,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
 
                     /* Normalize the volume level */
                     tmp32 = (inMicLevelTmp - stt->minLevel) << 14;
-                    if (stt->maxInit != stt->minLevel) {
+                    if (stt->maxInit != stt->minLevel)
+                    {
                         volNormFIX = tmp32 / (stt->maxInit - stt->minLevel);
                     }
 
@@ -1847,7 +2127,8 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                     tmpU32 =
                             ((uint32_t) weightFIX * (uint32_t) (inMicLevelTmp - stt->minLevel));
                     stt->micVol = (tmpU32 >> 14) + stt->minLevel;
-                    if (stt->micVol < lastMicVol + 1) {
+                    if (stt->micVol < lastMicVol + 1)
+                    {
                         stt->micVol = lastMicVol + 1;
                     }
 
@@ -1869,16 +2150,21 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
                             stt->fcount, stt->micVol);
 #endif
                 }
-            } else {
+            }
+            else
+            {
                 /* The signal is inside the desired range which is:
                  * lowerLimit < Rxx160_LP/640 < upperLimit
                  */
-                if (stt->changeToSlowMode > 4000) {
+                if (stt->changeToSlowMode > 4000)
+                {
                     stt->msecSpeechInnerChange = 1000;
                     stt->msecSpeechOuterChange = 500;
                     stt->upperLimit = stt->upperPrimaryLimit;
                     stt->lowerLimit = stt->lowerPrimaryLimit;
-                } else {
+                }
+                else
+                {
                     stt->changeToSlowMode += 2;  // in milliseconds
                 }
                 stt->msTooLow = 0;
@@ -1909,16 +2195,21 @@ int32_t WebRtcAgc_ProcessAnalog(void *state,
      * (but allow the zeroCtrl() increase on the frame of a mute detection).
      */
     if (echo == 1 ||
-        (stt->muteGuardMs > 0 && stt->muteGuardMs < kMuteGuardTimeMs)) {
-        if (stt->micVol > lastMicVol) {
+        (stt->muteGuardMs > 0 && stt->muteGuardMs < kMuteGuardTimeMs))
+    {
+        if (stt->micVol > lastMicVol)
+        {
             stt->micVol = lastMicVol;
         }
     }
 
     /* limit the gain */
-    if (stt->micVol > stt->maxLevel) {
+    if (stt->micVol > stt->maxLevel)
+    {
         stt->micVol = stt->maxLevel;
-    } else if (stt->micVol < stt->minOutput) {
+    }
+    else if (stt->micVol < stt->minOutput)
+    {
         stt->micVol = stt->minOutput;
     }
 
@@ -1935,26 +2226,30 @@ int WebRtcAgc_Process(void *agcInst,
                       int32_t inMicLevel,
                       int32_t *outMicLevel,
                       int16_t echo,
-                      uint8_t *saturationWarning) {
+                      uint8_t *saturationWarning)
+{
     LegacyAgc *stt;
-
     stt = (LegacyAgc *) agcInst;
-
-    //
-    if (stt == NULL) {
+    if (stt == NULL)
+    {
         return -1;
     }
-    //
-
-    if (stt->fs == 8000) {
-        if (samples != 80) {
+    if (stt->fs == 8000)
+    {
+        if (samples != 80)
+        {
             return -1;
         }
-    } else if (stt->fs == 16000 || stt->fs == 32000 || stt->fs == 48000) {
-        if (samples != 160) {
+    }
+    else if (stt->fs == 16000 || stt->fs == 32000 || stt->fs == 48000)
+    {
+        if (samples != 160)
+        {
             return -1;
         }
-    } else {
+    }
+    else
+    {
         return -1;
     }
 
@@ -1967,7 +2262,8 @@ int WebRtcAgc_Process(void *agcInst,
 #endif
 
     if (WebRtcAgc_ProcessDigital(&stt->digitalAgc, in_near, num_bands, out,
-                                 stt->fs, stt->lowLevelSignal) == -1) {
+                                 stt->fs, stt->lowLevelSignal) == -1)
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "AGC->Process, frame %d: Error from DigAGC\n\n",
                 stt->fcount);
@@ -1975,10 +2271,12 @@ int WebRtcAgc_Process(void *agcInst,
         return -1;
     }
     if (stt->agcMode < kAgcModeFixedDigital &&
-        (stt->lowLevelSignal == 0 || stt->agcMode != kAgcModeAdaptiveDigital)) {
+        (stt->lowLevelSignal == 0 || stt->agcMode != kAgcModeAdaptiveDigital))
+    {
         if (WebRtcAgc_ProcessAnalog(agcInst, inMicLevel, outMicLevel,
                                     stt->vadMic.logRatio, echo,
-                                    saturationWarning) == -1) {
+                                    saturationWarning) == -1)
+        {
             return -1;
         }
     }
@@ -1988,45 +2286,53 @@ int WebRtcAgc_Process(void *agcInst,
 #endif
 
     /* update queue */
-    if (stt->inQueue > 1) {
+    if (stt->inQueue > 1)
+    {
         memcpy(stt->env[0], stt->env[1], 10 * sizeof(int32_t));
         memcpy(stt->Rxx16w32_array[0], stt->Rxx16w32_array[1], 5 * sizeof(int32_t));
     }
 
-    if (stt->inQueue > 0) {
+    if (stt->inQueue > 0)
+    {
         stt->inQueue--;
     }
 
     return 0;
 }
 
-int WebRtcAgc_set_config(void *agcInst, WebRtcAgcConfig agcConfig) {
+int WebRtcAgc_set_config(void *agcInst, WebRtcAgcConfig agcConfig)
+{
     LegacyAgc *stt;
     stt = (LegacyAgc *) agcInst;
 
-    if (stt == NULL) {
+    if (stt == NULL)
+    {
         return -1;
     }
 
-    if (stt->initFlag != kInitCheck) {
+    if (stt->initFlag != kInitCheck)
+    {
         stt->lastError = AGC_UNINITIALIZED_ERROR;
         return -1;
     }
 
     if (agcConfig.limiterEnable != kAgcFalse &&
-        agcConfig.limiterEnable != kAgcTrue) {
+        agcConfig.limiterEnable != kAgcTrue)
+    {
         stt->lastError = AGC_BAD_PARAMETER_ERROR;
         return -1;
     }
     stt->limiterEnable = agcConfig.limiterEnable;
     stt->compressionGaindB = agcConfig.compressionGaindB;
-    if ((agcConfig.targetLevelDbfs < 0) || (agcConfig.targetLevelDbfs > 31)) {
+    if ((agcConfig.targetLevelDbfs < 0) || (agcConfig.targetLevelDbfs > 31))
+    {
         stt->lastError = AGC_BAD_PARAMETER_ERROR;
         return -1;
     }
     stt->targetLevelDbfs = agcConfig.targetLevelDbfs;
 
-    if (stt->agcMode == kAgcModeFixedDigital) {
+    if (stt->agcMode == kAgcModeFixedDigital)
+    {
         /* Adjust for different parameter interpretation in FixedDigital mode */
         stt->compressionGaindB += agcConfig.targetLevelDbfs;
     }
@@ -2037,7 +2343,8 @@ int WebRtcAgc_set_config(void *agcInst, WebRtcAgcConfig agcConfig) {
     /* Recalculate gain table */
     if (WebRtcAgc_CalculateGainTable(
             &(stt->digitalAgc.gainTable[0]), stt->compressionGaindB,
-            stt->targetLevelDbfs, stt->limiterEnable, stt->analogTarget) == -1) {
+            stt->targetLevelDbfs, stt->limiterEnable, stt->analogTarget) == -1)
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "AGC->set_config, frame %d: Error from calcGainTable\n\n",
                 stt->fcount);
@@ -2052,20 +2359,24 @@ int WebRtcAgc_set_config(void *agcInst, WebRtcAgcConfig agcConfig) {
     return 0;
 }
 
-int WebRtcAgc_get_config(void *agcInst, WebRtcAgcConfig *config) {
+int WebRtcAgc_get_config(void *agcInst, WebRtcAgcConfig *config)
+{
     LegacyAgc *stt;
     stt = (LegacyAgc *) agcInst;
 
-    if (stt == NULL) {
+    if (stt == NULL)
+    {
         return -1;
     }
 
-    if (config == NULL) {
+    if (config == NULL)
+    {
         stt->lastError = AGC_NULL_POINTER_ERROR;
         return -1;
     }
 
-    if (stt->initFlag != kInitCheck) {
+    if (stt->initFlag != kInitCheck)
+    {
         stt->lastError = AGC_UNINITIALIZED_ERROR;
         return -1;
     }
@@ -2077,7 +2388,8 @@ int WebRtcAgc_get_config(void *agcInst, WebRtcAgcConfig *config) {
     return 0;
 }
 
-void *WebRtcAgc_Create() {
+void *WebRtcAgc_Create()
+{
     LegacyAgc *stt = malloc(sizeof(LegacyAgc));
 
 #ifdef WEBRTC_AGC_DEBUG_DUMP
@@ -2092,7 +2404,8 @@ void *WebRtcAgc_Create() {
     return stt;
 }
 
-void WebRtcAgc_Free(void *state) {
+void WebRtcAgc_Free(void *state)
+{
     LegacyAgc *stt;
 
     stt = (LegacyAgc *) state;
@@ -2111,7 +2424,8 @@ int WebRtcAgc_Init(void *agcInst,
                    int32_t minLevel,
                    int32_t maxLevel,
                    int16_t agcMode,
-                   uint32_t fs) {
+                   uint32_t fs)
+{
     int32_t max_add, tmp32;
     int16_t i;
     int tmpNorm;
@@ -2120,7 +2434,8 @@ int WebRtcAgc_Init(void *agcInst,
     /* typecast state pointer */
     stt = (LegacyAgc *) agcInst;
 
-    if (WebRtcAgc_InitDigital(&stt->digitalAgc, agcMode) != 0) {
+    if (WebRtcAgc_InitDigital(&stt->digitalAgc, agcMode) != 0)
+    {
         stt->lastError = AGC_UNINITIALIZED_ERROR;
         return -1;
     }
@@ -2139,7 +2454,8 @@ int WebRtcAgc_Init(void *agcInst,
     stt->fcount = 0;
     fprintf(stt->fpt, "AGC->Init\n");
 #endif
-    if (agcMode < kAgcModeUnchanged || agcMode > kAgcModeFixedDigital) {
+    if (agcMode < kAgcModeUnchanged || agcMode > kAgcModeFixedDigital)
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "AGC->Init: error, incorrect mode\n\n");
 #endif
@@ -2155,7 +2471,8 @@ int WebRtcAgc_Init(void *agcInst,
      * the levels are shifted up to Q8-domain */
     tmpNorm = NormU32((uint32_t) maxLevel);
     stt->scale = tmpNorm - 23;
-    if (stt->scale < 0) {
+    if (stt->scale < 0)
+    {
         stt->scale = 0;
     }
     // TODO(bjornv): Investigate if we really need to scale up a small range now
@@ -2167,7 +2484,8 @@ int WebRtcAgc_Init(void *agcInst,
     minLevel <<= stt->scale;
 
     /* Make minLevel and maxLevel static in AdaptiveDigital */
-    if (stt->agcMode == kAgcModeAdaptiveDigital) {
+    if (stt->agcMode == kAgcModeAdaptiveDigital)
+    {
         minLevel = 0;
         maxLevel = 255;
         stt->scale = 0;
@@ -2187,7 +2505,8 @@ int WebRtcAgc_Init(void *agcInst,
 
     /* Initialize micVol parameter */
     stt->micVol = stt->maxAnalog;
-    if (stt->agcMode == kAgcModeAdaptiveDigital) {
+    if (stt->agcMode == kAgcModeAdaptiveDigital)
+    {
         stt->micVol = 127; /* Mid-point of mic level */
     }
     stt->micRef = stt->micVol;
@@ -2223,7 +2542,8 @@ int WebRtcAgc_Init(void *agcInst,
     stt->vadThreshold = kNormalVadThreshold;
     stt->inActive = 0;
 
-    for (i = 0; i < RXX_BUFFER_LEN; i++) {
+    for (i = 0; i < RXX_BUFFER_LEN; i++)
+    {
         stt->Rxx16_vectorw32[i] = (int32_t) 1000; /* -54dBm0 */
     }
     stt->Rxx160w32 =
@@ -2232,10 +2552,12 @@ int WebRtcAgc_Init(void *agcInst,
     stt->Rxx16pos = 0;
     stt->Rxx16_LPw32 = (int32_t) 16284; /* Q(-4) */
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++)
+    {
         stt->Rxx16w32_array[0][i] = 0;
     }
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i++)
+    {
         stt->env[0][i] = 0;
         stt->env[1][i] = 0;
     }
@@ -2253,7 +2575,8 @@ int WebRtcAgc_Init(void *agcInst,
     stt->defaultConfig.targetLevelDbfs = AGC_DEFAULT_TARGET_LEVEL;
     stt->defaultConfig.compressionGaindB = AGC_DEFAULT_COMP_GAIN;
 
-    if (WebRtcAgc_set_config(stt, stt->defaultConfig) == -1) {
+    if (WebRtcAgc_set_config(stt, stt->defaultConfig) == -1)
+    {
         stt->lastError = AGC_UNSPECIFIED_ERROR;
         return -1;
     }
@@ -2262,12 +2585,15 @@ int WebRtcAgc_Init(void *agcInst,
     stt->lowLevelSignal = 0;
 
     /* Only positive values are allowed that are not too large */
-    if ((minLevel >= maxLevel) || (maxLevel & 0xFC000000)) {
+    if ((minLevel >= maxLevel) || (maxLevel & 0xFC000000))
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "minLevel, maxLevel value(s) are invalid\n\n");
 #endif
         return -1;
-    } else {
+    }
+    else
+    {
 #ifdef WEBRTC_AGC_DEBUG_DUMP
         fprintf(stt->fpt, "\n");
 #endif

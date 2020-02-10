@@ -19,7 +19,9 @@
 #include <stdint.h>
 
 #if   defined(__APPLE__)
+
 # include <mach/mach_time.h>
+
 #elif defined(_WIN32)
 # define WIN32_LEAN_AND_MEAN
 
@@ -33,12 +35,15 @@
 #endif
 
 static
-uint64_t nanotimer() {
+uint64_t nanotimer()
+{
     static int ever = 0;
 #if defined(__APPLE__)
     static mach_timebase_info_data_t frequency;
-    if (!ever) {
-        if (mach_timebase_info(&frequency) != KERN_SUCCESS) {
+    if (!ever)
+    {
+        if (mach_timebase_info(&frequency) != KERN_SUCCESS)
+        {
             return 0;
         }
         ever = 1;
@@ -67,21 +72,25 @@ uint64_t nanotimer() {
 }
 
 
-static double now() {
+static double now()
+{
     static uint64_t epoch = 0;
-    if (!epoch) {
+    if (!epoch)
+    {
         epoch = nanotimer();
     }
     return (nanotimer() - epoch) / 1e9;
 };
 
-double calcElapsed(double start, double end) {
+double calcElapsed(double start, double end)
+{
     double took = -start;
     return took + end;
 }
 
 //写wav文件
-void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t totalSampleCount, unsigned int channels) {
+void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t totalSampleCount, unsigned int channels)
+{
     drwav_data_format format = {};
     format.container = drwav_container_riff;     // <-- drwav_container_riff = normal WAV files, drwav_container_w64 = Sony Wave64.
     format.format = DR_WAVE_FORMAT_PCM;          // <-- Any of the DR_WAVE_FORMAT_* codes.
@@ -89,10 +98,12 @@ void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t t
     format.sampleRate = (drwav_uint32) sampleRate;
     format.bitsPerSample = 16;
     drwav *pWav = drwav_open_file_write(filename, &format);
-    if (pWav) {
+    if (pWav)
+    {
         drwav_uint64 samplesWritten = drwav_write(pWav, totalSampleCount, buffer);
         drwav_uninit(pWav);
-        if (samplesWritten != totalSampleCount) {
+        if (samplesWritten != totalSampleCount)
+        {
             fprintf(stderr, "ERROR\n");
             exit(1);
         }
@@ -100,31 +111,38 @@ void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t t
 }
 
 //读取wav文件
-int16_t *wavRead_int16(char *filename, uint32_t *sampleRate, uint64_t *totalSampleCount, unsigned int* channels) {
+int16_t *wavRead_int16(char *filename, uint32_t *sampleRate, uint64_t *totalSampleCount, unsigned int *channels)
+{
     int16_t *buffer = drwav_open_and_read_file_s16(filename, channels, sampleRate, totalSampleCount);
-    if (buffer == nullptr) {
+    if (buffer == nullptr)
+    {
         printf("读取wav文件失败.");
     }
     return buffer;
 }
 
 //分割路径函数
-void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
+void splitpath(const char *path, char *drv, char *dir, char *name, char *ext)
+{
     const char *end;
     const char *p;
     const char *s;
-    if (path[0] && path[1] == ':') {
-        if (drv) {
+    if (path[0] && path[1] == ':')
+    {
+        if (drv)
+        {
             *drv++ = *path++;
             *drv++ = *path++;
             *drv = '\0';
         }
-    } else if (drv)
+    }
+    else if (drv)
         *drv = '\0';
     for (end = path; *end && *end != ':';)
         end++;
     for (p = end; p > path && *--p != '\\' && *p != '/';)
-        if (*p == '.') {
+        if (*p == '.')
+        {
             end = p;
             break;
         }
@@ -132,16 +150,19 @@ void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
         for (s = end; (*ext = *s++);)
             ext++;
     for (p = end; p > path;)
-        if (*--p == '\\' || *p == '/') {
+        if (*--p == '\\' || *p == '/')
+        {
             p++;
             break;
         }
-    if (name) {
+    if (name)
+    {
         for (s = p; s < end;)
             *name++ = *s++;
         *name = '\0';
     }
-    if (dir) {
+    if (dir)
+    {
         for (s = path; s < p;)
             *dir++ = *s++;
         *dir = '\0';
@@ -149,7 +170,8 @@ void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
 }
 
 
-int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_t agcMode) {
+int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_t agcMode)
+{
     if (buffer == nullptr) return -1;
     if (samplesCount == 0) return -1;
     WebRtcAgcConfig agcConfig;
@@ -166,13 +188,15 @@ int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
     void *agcInst = WebRtcAgc_Create();
     if (agcInst == NULL) return -1;
     int status = WebRtcAgc_Init(agcInst, minLevel, maxLevel, agcMode, sampleRate);
-    if (status != 0) {
+    if (status != 0)
+    {
         printf("WebRtcAgc_Init fail\n");
         WebRtcAgc_Free(agcInst);
         return -1;
     }
     status = WebRtcAgc_set_config(agcInst, agcConfig);
-    if (status != 0) {
+    if (status != 0)
+    {
         printf("WebRtcAgc_set_config fail\n");
         WebRtcAgc_Free(agcInst);
         return -1;
@@ -181,15 +205,17 @@ int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
     int inMicLevel, outMicLevel = -1;
     int16_t out_buffer[maxSamples];
     int16_t *out16 = out_buffer;
-    uint8_t saturationWarning = 1;                 //是否有溢出发生，增益放大以后的最大值超过了65536
-    int16_t echo = 0;                                 //增益放大是否考虑回声影响
-    for (int i = 0; i < nTotal; i++) {
+    uint8_t saturationWarning = 1;               //是否有溢出发生，增益放大以后的最大值超过了65536
+    int16_t echo = 0;                            //增益放大是否考虑回声影响
+    for (int i = 0; i < nTotal; i++)
+    {
         inMicLevel = 0;
         int nAgcRet = WebRtcAgc_Process(agcInst, (const int16_t *const *) &input, num_bands, samples,
                                         (int16_t *const *) &out16, inMicLevel, &outMicLevel, echo,
                                         &saturationWarning);
 
-        if (nAgcRet != 0) {
+        if (nAgcRet != 0)
+        {
             printf("failed in WebRtcAgc_Process\n");
             WebRtcAgc_Free(agcInst);
             return -1;
@@ -199,8 +225,10 @@ int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
     }
 
     const size_t remainedSamples = samplesCount - nTotal * samples;
-    if (remainedSamples > 0) {
-        if (nTotal > 0) {
+    if (remainedSamples > 0)
+    {
+        if (nTotal > 0)
+        {
             input = input - samples + remainedSamples;
         }
 
@@ -209,12 +237,14 @@ int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
                                         (int16_t *const *) &out16, inMicLevel, &outMicLevel, echo,
                                         &saturationWarning);
 
-        if (nAgcRet != 0) {
+        if (nAgcRet != 0)
+        {
             printf("failed in WebRtcAgc_Process during filtering the last chunk\n");
             WebRtcAgc_Free(agcInst);
             return -1;
         }
-        memcpy(&input[samples-remainedSamples], &out_buffer[samples-remainedSamples], remainedSamples * sizeof(int16_t));
+        memcpy(&input[samples - remainedSamples], &out_buffer[samples - remainedSamples],
+               remainedSamples * sizeof(int16_t));
         input += samples;
     }
 
@@ -222,7 +252,8 @@ int agcProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
     return 1;
 }
 
-void auto_gain(char *in_file, char *out_file) {
+void auto_gain(char *in_file, char *out_file)
+{
     //音频采样率
     uint32_t sampleRate = 0;
     //总音频采样数
@@ -230,7 +261,8 @@ void auto_gain(char *in_file, char *out_file) {
     unsigned int channels = 0;
     int16_t *inBuffer = wavRead_int16(in_file, &sampleRate, &inSampleCount, &channels);
     //如果加载成功
-    if (inBuffer != nullptr) {
+    if (inBuffer != nullptr)
+    {
         //  kAgcModeAdaptiveAnalog  模拟音量调节
         //  kAgcModeAdaptiveDigital 自适应增益
         //  kAgcModeFixedDigital 固定增益
@@ -244,9 +276,10 @@ void auto_gain(char *in_file, char *out_file) {
         wavWrite_int16(out_file, inBuffer, sampleRate, inSampleCount, channels);
         free(inBuffer);
     }
- }
+}
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     printf("WebRTC Automatic Gain Control\n");
     printf("音频自动增益\n");
     if (argc < 2)

@@ -22,7 +22,8 @@
 #endif
 
 
-void wavWrite_int16(char *filename, int16_t *buffer, int sampleRate, uint64_t totalSampleCount, uint32_t channels) {
+void wavWrite_int16(char *filename, int16_t *buffer, int sampleRate, uint64_t totalSampleCount, uint32_t channels)
+{
     drwav_data_format format;
     format.container = drwav_container_riff;
     format.format = DR_WAVE_FORMAT_PCM;
@@ -31,32 +32,39 @@ void wavWrite_int16(char *filename, int16_t *buffer, int sampleRate, uint64_t to
     format.bitsPerSample = 16;
 
     drwav *pWav = drwav_open_file_write(filename, &format);
-    if (pWav) {
+    if (pWav)
+    {
         drwav_uint64 samplesWritten = drwav_write(pWav, totalSampleCount, buffer);
         drwav_uninit(pWav);
-        if (samplesWritten != totalSampleCount) {
+        if (samplesWritten != totalSampleCount)
+        {
             fprintf(stderr, "write file [%s] error.\n", filename);
             exit(1);
         }
     }
 }
 
-int16_t *wavRead_int16(const char *filename, uint32_t *sampleRate, uint64_t *sampleCount, uint32_t *channels) {
+int16_t *wavRead_int16(const char *filename, uint32_t *sampleRate, uint64_t *sampleCount, uint32_t *channels)
+{
     drwav_uint64 totalSampleCount = 0;
     int16_t *input = drwav_open_file_and_read_pcm_frames_s16(filename, channels, sampleRate, &totalSampleCount);
-    if (input == NULL) {
+    if (input == NULL)
+    {
         drmp3_config pConfig;
         float *mp3_buf = drmp3_open_file_and_read_f32(filename, &pConfig, &totalSampleCount);
-        if (mp3_buf != NULL) {
+        if (mp3_buf != NULL)
+        {
             *channels = pConfig.outputChannels;
             *sampleRate = pConfig.outputSampleRate;
         }
         input = (int16_t *) mp3_buf;
-        for (int32_t i = 0; i < *sampleCount; ++i) {
+        for (int32_t i = 0; i < *sampleCount; ++i)
+        {
             input[i] = (int16_t) drwav_clamp((mp3_buf[i] * 32768.0f), -32768, 32767);
         }
     }
-    if (input == NULL) {
+    if (input == NULL)
+    {
         fprintf(stderr, "read file [%s] error.\n", filename);
         exit(1);
     }
@@ -67,22 +75,27 @@ int16_t *wavRead_int16(const char *filename, uint32_t *sampleRate, uint64_t *sam
 
 
 //分割路径函数
-void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
+void splitpath(const char *path, char *drv, char *dir, char *name, char *ext)
+{
     const char *end;
     const char *p;
     const char *s;
-    if (path[0] && path[1] == ':') {
-        if (drv) {
+    if (path[0] && path[1] == ':')
+    {
+        if (drv)
+        {
             *drv++ = *path++;
             *drv++ = *path++;
             *drv = '\0';
         }
-    } else if (drv)
+    }
+    else if (drv)
         *drv = '\0';
     for (end = path; *end && *end != ':';)
         end++;
     for (p = end; p > path && *--p != '\\' && *p != '/';)
-        if (*p == '.') {
+        if (*p == '.')
+        {
             end = p;
             break;
         }
@@ -90,23 +103,28 @@ void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
         for (s = end; (*ext = *s++);)
             ext++;
     for (p = end; p > path;)
-        if (*--p == '\\' || *p == '/') {
+        if (*--p == '\\' || *p == '/')
+        {
             p++;
             break;
         }
-    if (name) {
+    if (name)
+    {
         for (s = p; s < end;)
             *name++ = *s++;
         *name = '\0';
     }
-    if (dir) {
+    if (dir)
+    {
         for (s = path; s < p;)
             *dir++ = *s++;
         *dir = '\0';
     }
 }
 
-enum nsLevel {
+// 4 types, the second is the best
+enum nsLevel
+{
     kLow,
     kModerate,
     kHigh,
@@ -114,7 +132,8 @@ enum nsLevel {
 };
 
 
-int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint32_t channels, enum nsLevel level) {
+int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint32_t channels, enum nsLevel level)
+{
     if (buffer == nullptr) return -1;
     if (samplesCount == 0) return -1;
     size_t samples = MIN(160, sampleRate / 100);
@@ -124,7 +143,8 @@ int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint3
     size_t frames = (samplesCount / (samples * channels));
     int16_t *frameBuffer = (int16_t *) malloc(sizeof(*frameBuffer) * channels * samples);
     NsHandle **NsHandles = (NsHandle **) malloc(channels * sizeof(NsHandle *));
-    if (NsHandles == NULL || frameBuffer == NULL) {
+    if (NsHandles == NULL || frameBuffer == NULL)
+    {
         if (NsHandles)
             free(NsHandles);
         if (frameBuffer)
@@ -132,26 +152,35 @@ int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint3
         fprintf(stderr, "malloc error.\n");
         return -1;
     }
-    for (int i = 0; i < channels; i++) {
-        NsHandles[i] = WebRtcNs_Create();
-        if (NsHandles[i] != NULL) {
+    for (int i = 0; i < channels; i++)
+    {
+        NsHandles[i] = WebRtcNs_Create(); //
+        if (NsHandles[i] != NULL)
+        {
             int status = WebRtcNs_Init(NsHandles[i], sampleRate);
-            if (status != 0) {
+            if (status != 0)
+            {
                 fprintf(stderr, "WebRtcNs_Init fail\n");
                 WebRtcNs_Free(NsHandles[i]);
                 NsHandles[i] = NULL;
-            } else {
+            }
+            else
+            {
                 status = WebRtcNs_set_policy(NsHandles[i], level);
-                if (status != 0) {
+                if (status != 0)
+                {
                     fprintf(stderr, "WebRtcNs_set_policy fail\n");
                     WebRtcNs_Free(NsHandles[i]);
                     NsHandles[i] = NULL;
                 }
             }
         }
-        if (NsHandles[i] == NULL) {
-            for (int x = 0; x < i; x++) {
-                if (NsHandles[x]) {
+        if (NsHandles[i] == NULL)
+        {
+            for (int x = 0; x < i; x++)
+            {
+                if (NsHandles[x])
+                {
                     WebRtcNs_Free(NsHandles[x]);
                 }
             }
@@ -160,8 +189,10 @@ int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint3
             return -1;
         }
     }
-    for (int i = 0; i < frames; i++) {
-        for (int c = 0; c < channels; c++) {
+    for (int i = 0; i < frames; i++)
+    {
+        for (int c = 0; c < channels; c++)
+        {
             for (int k = 0; k < samples; k++)
                 frameBuffer[k] = input[k * channels + c];
 
@@ -175,8 +206,10 @@ int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint3
         input += samples * channels;
     }
 
-    for (int i = 0; i < channels; i++) {
-        if (NsHandles[i]) {
+    for (int i = 0; i < channels; i++)
+    {
+        if (NsHandles[i])
+        {
             WebRtcNs_Free(NsHandles[i]);
         }
     }
@@ -185,7 +218,8 @@ int nsProcess(int16_t *buffer, uint32_t sampleRate, uint64_t samplesCount, uint3
     return 1;
 }
 
-void noise_suppression(char *in_file, char *out_file) {
+void noise_suppression(char *in_file, char *out_file)
+{
     //音频采样率
     uint32_t sampleRate = 0;
     uint32_t channels = 0;
@@ -194,7 +228,8 @@ void noise_suppression(char *in_file, char *out_file) {
     int16_t *inBuffer = wavRead_int16(in_file, &sampleRate, &inSampleCount, &channels);
 
     //如果加载成功
-    if (inBuffer != nullptr) {
+    if (inBuffer != nullptr)
+    {
         double startTime = now();
         nsProcess(inBuffer, sampleRate, inSampleCount, channels, kModerate);
         double time_interval = calcElapsed(startTime, now());
@@ -206,7 +241,8 @@ void noise_suppression(char *in_file, char *out_file) {
     }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     printf("WebRtc Noise Suppression\n");
     if (argc < 2)
         return -1;

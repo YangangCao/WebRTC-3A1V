@@ -17,7 +17,8 @@
 #endif
 
 //写wav文件
-void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t totalSampleCount) {
+void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t totalSampleCount)
+{
     drwav_data_format format = {};
     format.container = drwav_container_riff;     // <-- drwav_container_riff = normal WAV files, drwav_container_w64 = Sony Wave64.
     format.format = DR_WAVE_FORMAT_PCM;          // <-- Any of the DR_WAVE_FORMAT_* codes.
@@ -25,10 +26,12 @@ void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t t
     format.sampleRate = (drwav_uint32) sampleRate;
     format.bitsPerSample = 16;
     drwav *pWav = drwav_open_file_write(filename, &format);
-    if (pWav) {
+    if (pWav)
+    {
         drwav_uint64 samplesWritten = drwav_write(pWav, totalSampleCount, buffer);
         drwav_uninit(pWav);
-        if (samplesWritten != totalSampleCount) {
+        if (samplesWritten != totalSampleCount)
+        {
             fprintf(stderr, "ERROR\n");
             exit(1);
         }
@@ -36,14 +39,17 @@ void wavWrite_int16(char *filename, int16_t *buffer, size_t sampleRate, size_t t
 }
 
 //读取wav文件
-int16_t *wavRead_int16(char *filename, uint32_t *sampleRate, uint64_t *totalSampleCount) {
+int16_t *wavRead_int16(char *filename, uint32_t *sampleRate, uint64_t *totalSampleCount)
+{
     unsigned int channels;
     int16_t *buffer = drwav_open_and_read_file_s16(filename, &channels, sampleRate, totalSampleCount);
-    if (buffer == nullptr) {
+    if (buffer == nullptr)
+    {
         printf("读取wav文件失败.");
     }
     //仅仅处理单通道音频
-    if (channels != 1) {
+    if (channels != 1)
+    {
         drwav_free(buffer);
         buffer = nullptr;
         *sampleRate = 0;
@@ -53,22 +59,27 @@ int16_t *wavRead_int16(char *filename, uint32_t *sampleRate, uint64_t *totalSamp
 }
 
 //分割路径函数
-void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
+void splitpath(const char *path, char *drv, char *dir, char *name, char *ext)
+{
     const char *end;
     const char *p;
     const char *s;
-    if (path[0] && path[1] == ':') {
-        if (drv) {
+    if (path[0] && path[1] == ':')
+    {
+        if (drv)
+        {
             *drv++ = *path++;
             *drv++ = *path++;
             *drv = '\0';
         }
-    } else if (drv)
+    }
+    else if (drv)
         *drv = '\0';
     for (end = path; *end && *end != ':';)
         end++;
     for (p = end; p > path && *--p != '\\' && *p != '/';)
-        if (*p == '.') {
+        if (*p == '.')
+        {
             end = p;
             break;
         }
@@ -76,16 +87,19 @@ void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
         for (s = end; (*ext = *s++);)
             ext++;
     for (p = end; p > path;)
-        if (*--p == '\\' || *p == '/') {
+        if (*--p == '\\' || *p == '/')
+        {
             p++;
             break;
         }
-    if (name) {
+    if (name)
+    {
         for (s = p; s < end;)
             *name++ = *s++;
         *name = '\0';
     }
-    if (dir) {
+    if (dir)
+    {
         for (s = path; s < p;)
             *dir++ = *s++;
         *dir = '\0';
@@ -94,7 +108,8 @@ void splitpath(const char *path, char *drv, char *dir, char *name, char *ext) {
 
 
 int aecProcess(int16_t *far_frame, int16_t *near_frame, uint32_t sampleRate, size_t samplesCount, int16_t nMode,
-               int16_t msInSndCardBuf) {
+               int16_t msInSndCardBuf)
+{
     if (near_frame == nullptr) return -1;
     if (far_frame == nullptr) return -1;
     if (samplesCount == 0) return -1;
@@ -110,28 +125,33 @@ int aecProcess(int16_t *far_frame, int16_t *near_frame, uint32_t sampleRate, siz
     void *aecmInst = WebRtcAecm_Create();
     if (aecmInst == NULL) return -1;
     int status = WebRtcAecm_Init(aecmInst, sampleRate);//8000 or 16000 Sample rate
-    if (status != 0) {
+    if (status != 0)
+    {
         printf("WebRtcAecm_Init fail\n");
         WebRtcAecm_Free(aecmInst);
         return -1;
     }
     status = WebRtcAecm_set_config(aecmInst, config);
-    if (status != 0) {
+    if (status != 0)
+    {
         printf("WebRtcAecm_set_config fail\n");
         WebRtcAecm_Free(aecmInst);
         return -1;
     }
 
     int16_t out_buffer[maxSamples];
-    for (int i = 0; i < nTotal; i++) {
-        if (WebRtcAecm_BufferFarend(aecmInst, far_input, samples) != 0) {
+    for (int i = 0; i < nTotal; i++)
+    {
+        if (WebRtcAecm_BufferFarend(aecmInst, far_input, samples) != 0)
+        {
             printf("WebRtcAecm_BufferFarend() failed.");
             WebRtcAecm_Free(aecmInst);
             return -1;
         }
         int nRet = WebRtcAecm_Process(aecmInst, near_input, NULL, out_buffer, samples, msInSndCardBuf);
 
-        if (nRet != 0) {
+        if (nRet != 0)
+        {
             printf("failed in WebRtcAecm_Process\n");
             WebRtcAecm_Free(aecmInst);
             return -1;
@@ -144,7 +164,8 @@ int aecProcess(int16_t *far_frame, int16_t *near_frame, uint32_t sampleRate, siz
     return 1;
 }
 
-void AECM(char *near_file, char *far_file, char *out_file) {
+void AECM(char *near_file, char *far_file, char *out_file)
+{
     //音频采样率
     uint32_t sampleRate = 0;
     uint64_t inSampleCount = 0;
@@ -152,7 +173,8 @@ void AECM(char *near_file, char *far_file, char *out_file) {
     uint64_t ref_inSampleCount = 0;
     int16_t *near_frame = wavRead_int16(near_file, &sampleRate, &inSampleCount);
     int16_t *far_frame = wavRead_int16(far_file, &ref_sampleRate, &ref_inSampleCount);
-    if ((near_frame == nullptr || far_frame == nullptr)) {
+    if ((near_frame == nullptr || far_frame == nullptr))
+    {
         if (near_frame) free(near_frame);
         if (far_frame) free(far_frame);
         return;
@@ -169,9 +191,10 @@ void AECM(char *near_file, char *far_file, char *out_file) {
     free(far_frame);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     printf("WebRTC Acoustic Echo Canceller for Mobile\n");
-    printf("usage : aecm far_file.wav near_file.wav\n");
+    printf("usage : aecm near_file.wav far_file.wav\n");
     if (argc < 3)
         return -1;
     // echo file

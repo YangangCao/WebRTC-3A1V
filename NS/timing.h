@@ -2,7 +2,9 @@
 #include <stdint.h>
 
 #if   defined(__APPLE__)
+
 # include <mach/mach_time.h>
+
 #elif defined(_WIN32)
 # define WIN32_LEAN_AND_MEAN
 
@@ -18,17 +20,20 @@
 #endif
 
 static
-uint64_t nanotimer() {
+uint64_t nanotimer()
+{
     static int ever = 0;
 #if defined(__APPLE__)
     static mach_timebase_info_data_t frequency;
-    if (!ever) {
-        if (mach_timebase_info(&frequency) != KERN_SUCCESS) {
+    if (!ever)
+    {
+        if (mach_timebase_info(&frequency) != KERN_SUCCESS)
+        {
             return 0;
         }
         ever = 1;
     }
-    return  (mach_absolute_time() * frequency.numer / frequency.denom);
+    return (mach_absolute_time() * frequency.numer / frequency.denom);
 #elif defined(_WIN32)
     static LARGE_INTEGER frequency;
     if (!ever) {
@@ -52,15 +57,18 @@ uint64_t nanotimer() {
 }
 
 
-static double now() {
+static double now()
+{
     static uint64_t epoch = 0;
-    if (!epoch) {
+    if (!epoch)
+    {
         epoch = nanotimer();
     }
     return (nanotimer() - epoch) / 1e9;
 };
 
-double calcElapsed(double start, double end) {
+double calcElapsed(double start, double end)
+{
     double took = -start;
     return took + end;
 }

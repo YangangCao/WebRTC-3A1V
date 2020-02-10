@@ -41,20 +41,25 @@ int32_t WebRtcSpl_Energy(int16_t *vector,
                          size_t vector_length,
                          int *scale_factor);
 
-enum {
+enum
+{
     kNumChannels = 6
 };  // Number of frequency bands (named channels).
-enum {
+enum
+{
     kNumGaussians = 2
 };  // Number of Gaussians per channel in the GMM.
-enum {
+enum
+{
     kTableSize = kNumChannels * kNumGaussians
 };
-enum {
+enum
+{
     kMinEnergy = 10
 };  // Minimum energy required to trigger audio signal.
 
-typedef struct VadInstT_ {
+typedef struct VadInstT_
+{
     int vad;
     int32_t downsampling_filter_states[4];
     int16_t noise_means[kTableSize];

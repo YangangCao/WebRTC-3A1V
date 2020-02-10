@@ -12,13 +12,15 @@
 #include <stdlib.h>
 
 
-static __inline int32_t DivW32W16(int32_t num, int16_t den) {
+static __inline int32_t DivW32W16(int32_t num, int16_t den)
+{
     // Guard against division with 0
     return (den != 0) ? (int32_t) (num / den) : (int32_t) 0x7FFFFFFF;
 }
 
 
-static __inline uint32_t __clz_uint32(uint32_t v) {
+static __inline uint32_t __clz_uint32(uint32_t v)
+{
 // Never used with input 0
     assert(v > 0);
 #if defined(__INTEL_COMPILER)
@@ -64,7 +66,8 @@ static __inline uint32_t __clz_uint32(uint32_t v) {
 
 // Return the number of steps a can be left-shifted without overflow,
 // or 0 if a == 0.
-static __inline int16_t NormU32(uint32_t a) {
+static __inline int16_t NormU32(uint32_t a)
+{
 
     if (a == 0) return 0;
     return (int16_t) __clz_uint32(a);
@@ -73,7 +76,8 @@ static __inline int16_t NormU32(uint32_t a) {
 
 // Return the number of steps a can be left-shifted without overflow,
 // or 0 if a == 0.
-static __inline int16_t NormW32(int32_t a) {
+static __inline int16_t NormW32(int32_t a)
+{
 
     if (a == 0) return 0;
     uint32_t v = (uint32_t) (a < 0 ? ~a : a);
@@ -82,19 +86,22 @@ static __inline int16_t NormW32(int32_t a) {
 }
 
 void resampleData(const int16_t *sourceData, int32_t sampleRate, uint32_t srcSize, int16_t *destinationData,
-                  int32_t newSampleRate) {
-    if (sampleRate == newSampleRate) {
+                  int32_t newSampleRate)
+{
+    if (sampleRate == newSampleRate)
+    {
         memcpy(destinationData, sourceData, srcSize * sizeof(int16_t));
         return;
     }
     uint32_t last_pos = srcSize - 1;
     uint32_t dstSize = (uint32_t) (srcSize * ((float) newSampleRate / sampleRate));
-    for (uint32_t idx = 0; idx < dstSize; idx++) {
+    for (uint32_t idx = 0; idx < dstSize; idx++)
+    {
         float index = ((float) idx * sampleRate) / (newSampleRate);
         uint32_t p1 = (uint32_t) index;
         float coef = index - p1;
         uint32_t p2 = (p1 == last_pos) ? last_pos : p1 + 1;
-        destinationData[idx] = (int16_t) ((1.0f - coef) * sourceData[p1] + coef * sourceData[p2]);
+        destinationData[idx] = (int16_t) ((1.0f - coef) * sourceData[p2] + coef * sourceData[p1]);
     }
 }
 
@@ -181,11 +188,13 @@ static const int16_t kGlobalThresholdVAG[3] = {1100, 1050, 1100};
 //
 // returns          : The weighted average.
 static int32_t WeightedAverage(int16_t *data, int16_t offset,
-                               const int16_t *weights) {
+                               const int16_t *weights)
+{
     int k;
     int32_t weighted_average = 0;
 
-    for (k = 0; k < kNumGaussians; k++) {
+    for (k = 0; k < kNumGaussians; k++)
+    {
         data[k * kNumChannels] += offset;
         weighted_average += data[k * kNumChannels] * weights[k * kNumChannels];
     }
@@ -204,7 +213,8 @@ static int32_t WeightedAverage(int16_t *data, int16_t offset,
 //
 // - returns              : the VAD decision (0 - noise, 1 - speech).
 static int16_t GmmProbability(VadInstT *self, int16_t *features,
-                              int16_t total_power, size_t frame_length) {
+                              int16_t total_power, size_t frame_length)
+{
     int channel, k;
     int16_t feature_minimum;
     int16_t h0, h1;
@@ -228,24 +238,30 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
     int16_t overhead1, overhead2, individualTest, totalTest;
 
     // Set various thresholds based on frame lengths (80, 160 or 240 samples).
-    if (frame_length == 80) {
+    if (frame_length == 80)
+    {
         overhead1 = self->over_hang_max_1[0];
         overhead2 = self->over_hang_max_2[0];
         individualTest = self->individual[0];
         totalTest = self->total[0];
-    } else if (frame_length == 160) {
+    }
+    else if (frame_length == 160)
+    {
         overhead1 = self->over_hang_max_1[1];
         overhead2 = self->over_hang_max_2[1];
         individualTest = self->individual[1];
         totalTest = self->total[1];
-    } else {
+    }
+    else
+    {
         overhead1 = self->over_hang_max_1[2];
         overhead2 = self->over_hang_max_2[2];
         individualTest = self->individual[2];
         totalTest = self->total[2];
     }
 
-    if (total_power > kMinEnergy) {
+    if (total_power > kMinEnergy)
+    {
         // The signal power of current frame is large enough for processing. The
         // processing consists of two parts:
         // 1) Calculating the likelihood of speech and thereby a VAD decision.
@@ -257,13 +273,15 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
         //
         // We combine a global LRT with local tests, for each frequency sub-band,
         // here defined as |channel|.
-        for (channel = 0; channel < kNumChannels; channel++) {
+        for (channel = 0; channel < kNumChannels; channel++)
+        {
             // For each channel we model the probability with a GMM consisting of
             // |kNumGaussians|, with different means and standard deviations depending
             // on H0 or H1.
             h0_test = 0;
             h1_test = 0;
-            for (k = 0; k < kNumGaussians; k++) {
+            for (k = 0; k < kNumGaussians; k++)
+            {
                 gaussian = channel + k * kNumChannels;
                 // Probability under H0, that is, probability of frame being noise.
                 // Value given in Q27 = Q7 * Q20.
@@ -299,10 +317,12 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
             // cancel.
             shifts_h0 = NormW32(h0_test);
             shifts_h1 = NormW32(h1_test);
-            if (h0_test == 0) {
+            if (h0_test == 0)
+            {
                 shifts_h0 = 31;
             }
-            if (h1_test == 0) {
+            if (h1_test == 0)
+            {
                 shifts_h1 = 31;
             }
             log_likelihood_ratio = shifts_h0 - shifts_h1;
@@ -313,7 +333,8 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
                     (int32_t) (log_likelihood_ratio * kSpectrumWeight[channel]);
 
             // Local VAD decision.
-            if ((log_likelihood_ratio * 4) > individualTest) {
+            if ((log_likelihood_ratio * 4) > individualTest)
+            {
                 vadflag = 1;
             }
 
@@ -321,13 +342,16 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
             // hard coded number of Gaussians set to two. Find a way to generalize.
             // Calculate local noise probabilities used later when updating the GMM.
             h0 = (int16_t) (h0_test >> 12);  // Q15
-            if (h0 > 0) {
+            if (h0 > 0)
+            {
                 // High probability of noise. Assign conditional probabilities for each
                 // Gaussian in the GMM.
                 tmp1_s32 = (noise_probability[0] & 0xFFFFF000) << 2;  // Q29
                 ngprvec[channel] = (int16_t) DivW32W16(tmp1_s32, h0);  // Q14
                 ngprvec[channel + kNumChannels] = 16384 - ngprvec[channel];
-            } else {
+            }
+            else
+            {
                 // Low noise probability. Assign conditional probability 1 to the first
                 // Gaussian and 0 to the rest (which is already set at initialization).
                 ngprvec[channel] = 16384;
@@ -335,7 +359,8 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
 
             // Calculate local speech probabilities used later when updating the GMM.
             h1 = (int16_t) (h1_test >> 12);  // Q15
-            if (h1 > 0) {
+            if (h1 > 0)
+            {
                 // High probability of speech. Assign conditional probabilities for each
                 // Gaussian in the GMM. Otherwise use the initialized values, i.e., 0.
                 tmp1_s32 = (speech_probability[0] & 0xFFFFF000) << 2;  // Q29
@@ -349,7 +374,8 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
 
         // Update the model parameters.
         maxspe = 12800;
-        for (channel = 0; channel < kNumChannels; channel++) {
+        for (channel = 0; channel < kNumChannels; channel++)
+        {
 
             // Get minimum value in past which is used for long term correction in Q4.
             feature_minimum = WebRtcVad_FindMinimum(self, features[channel], channel);
@@ -359,7 +385,8 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
                                                 &kNoiseDataWeights[channel]);
             tmp1_s16 = (int16_t) (noise_global_mean >> 6);  // Q8
 
-            for (k = 0; k < kNumGaussians; k++) {
+            for (k = 0; k < kNumGaussians; k++)
+            {
                 gaussian = channel + k * kNumChannels;
 
                 nmk = self->noise_means[gaussian];
@@ -369,7 +396,8 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
 
                 // Update noise mean vector if the frame consists of noise only.
                 nmk2 = nmk;
-                if (!vadflag) {
+                if (!vadflag)
+                {
                     // deltaN = (x-mu)/sigma^2
                     // ngprvec[k] = |noise_probability[k]| /
                     //   (|noise_probability[0]| + |noise_probability[1]|)
@@ -388,16 +416,19 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
 
                 // Control that the noise mean does not drift to much.
                 tmp_s16 = (int16_t) ((k + 5) << 7);
-                if (nmk3 < tmp_s16) {
+                if (nmk3 < tmp_s16)
+                {
                     nmk3 = tmp_s16;
                 }
                 tmp_s16 = (int16_t) ((72 + k - channel) << 7);
-                if (nmk3 > tmp_s16) {
+                if (nmk3 > tmp_s16)
+                {
                     nmk3 = tmp_s16;
                 }
                 self->noise_means[gaussian] = nmk3;
 
-                if (vadflag) {
+                if (vadflag)
+                {
                     // Update speech mean vector:
                     // |deltaS| = (x-mu)/sigma^2
                     // sgprvec[k] = |speech_probability[k]| /
@@ -412,10 +443,12 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
 
                     // Control that the speech mean does not drift to much.
                     maxmu = maxspe + 640;
-                    if (smk2 < kMinimumMean[k]) {
+                    if (smk2 < kMinimumMean[k])
+                    {
                         smk2 = kMinimumMean[k];
                     }
-                    if (smk2 > maxmu) {
+                    if (smk2 > maxmu)
+                    {
                         smk2 = maxmu;
                     }
                     self->speech_means[gaussian] = smk2;  // Q7.
@@ -434,9 +467,12 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
                     tmp2_s32 = tmp1_s32 >> 4;  // Q20
 
                     // 0.1 * Q20 / Q7 = Q13.
-                    if (tmp2_s32 > 0) {
+                    if (tmp2_s32 > 0)
+                    {
                         tmp_s16 = (int16_t) DivW32W16(tmp2_s32, ssk * 10);
-                    } else {
+                    }
+                    else
+                    {
                         tmp_s16 = (int16_t) DivW32W16(-tmp2_s32, ssk * 10);
                         tmp_s16 = -tmp_s16;
                     }
@@ -445,11 +481,14 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
                     // (Q13 >> 8) = (Q13 >> 6) / 4 = Q7.
                     tmp_s16 += 128;  // Rounding.
                     ssk += (tmp_s16 >> 8);
-                    if (ssk < kMinStd) {
+                    if (ssk < kMinStd)
+                    {
                         ssk = kMinStd;
                     }
                     self->speech_stds[gaussian] = ssk;
-                } else {
+                }
+                else
+                {
                     // Update GMM variance vectors.
                     // deltaN * (features[channel] - nmk) - 1
                     // Q4 - (Q7 >> 3) = Q4.
@@ -467,15 +506,19 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
                     tmp1_s32 = tmp2_s32 >> 14;
 
                     // Q20 / Q7 = Q13.
-                    if (tmp1_s32 > 0) {
+                    if (tmp1_s32 > 0)
+                    {
                         tmp_s16 = (int16_t) DivW32W16(tmp1_s32, nsk);
-                    } else {
+                    }
+                    else
+                    {
                         tmp_s16 = (int16_t) DivW32W16(-tmp1_s32, nsk);
                         tmp_s16 = -tmp_s16;
                     }
                     tmp_s16 += 32;  // Rounding
                     nsk += tmp_s16 >> 6;  // Q13 >> 6 = Q7.
-                    if (nsk < kMinStd) {
+                    if (nsk < kMinStd)
+                    {
                         nsk = kMinStd;
                     }
                     self->noise_stds[gaussian] = nsk;
@@ -495,7 +538,8 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
             // (Q14 >> 9) - (Q14 >> 9) = Q5.
             diff = (int16_t) (speech_global_mean >> 9) -
                    (int16_t) (noise_global_mean >> 9);
-            if (diff < kMinimumDifference[channel]) {
+            if (diff < kMinimumDifference[channel])
+            {
                 tmp_s16 = kMinimumDifference[channel] - diff;
 
                 // |tmp1_s16| = ~0.8 * (kMinimumDifference - diff) in Q7.
@@ -521,20 +565,24 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
             // Control that the speech & noise means do not drift to much.
             maxspe = kMaximumSpeech[channel];
             tmp2_s16 = (int16_t) (speech_global_mean >> 7);
-            if (tmp2_s16 > maxspe) {
+            if (tmp2_s16 > maxspe)
+            {
                 // Upper limit of speech model.
                 tmp2_s16 -= maxspe;
 
-                for (k = 0; k < kNumGaussians; k++) {
+                for (k = 0; k < kNumGaussians; k++)
+                {
                     self->speech_means[channel + k * kNumChannels] -= tmp2_s16;
                 }
             }
 
             tmp2_s16 = (int16_t) (noise_global_mean >> 7);
-            if (tmp2_s16 > kMaximumNoise[channel]) {
+            if (tmp2_s16 > kMaximumNoise[channel])
+            {
                 tmp2_s16 -= kMaximumNoise[channel];
 
-                for (k = 0; k < kNumGaussians; k++) {
+                for (k = 0; k < kNumGaussians; k++)
+                {
                     self->noise_means[channel + k * kNumChannels] -= tmp2_s16;
                 }
             }
@@ -543,18 +591,25 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
     }
 
     // Smooth with respect to transition hysteresis.
-    if (!vadflag) {
-        if (self->over_hang > 0) {
+    if (!vadflag)
+    {
+        if (self->over_hang > 0)
+        {
             vadflag = 2 + self->over_hang;
             self->over_hang--;
         }
         self->num_of_speech = 0;
-    } else {
+    }
+    else
+    {
         self->num_of_speech++;
-        if (self->num_of_speech > kMaxSpeechFrames) {
+        if (self->num_of_speech > kMaxSpeechFrames)
+        {
             self->num_of_speech = kMaxSpeechFrames;
             self->over_hang = overhead2;
-        } else {
+        }
+        else
+        {
             self->over_hang = overhead1;
         }
     }
@@ -562,10 +617,12 @@ static int16_t GmmProbability(VadInstT *self, int16_t *features,
 }
 
 // Initialize the VAD. Set aggressiveness mode to default value.
-int WebRtcVad_InitCore(VadInstT *self) {
+int WebRtcVad_InitCore(VadInstT *self)
+{
     int i;
 
-    if (self == NULL) {
+    if (self == NULL)
+    {
         return -1;
     }
 
@@ -581,7 +638,8 @@ int WebRtcVad_InitCore(VadInstT *self) {
 
 
     // Read initial PDF parameters.
-    for (i = 0; i < kTableSize; i++) {
+    for (i = 0; i < kTableSize; i++)
+    {
         self->noise_means[i] = kNoiseDataMeans[i];
         self->speech_means[i] = kSpeechDataMeans[i];
         self->noise_stds[i] = kNoiseDataStds[i];
@@ -589,7 +647,8 @@ int WebRtcVad_InitCore(VadInstT *self) {
     }
 
     // Initialize Index and Minimum value vectors.
-    for (i = 0; i < 16 * kNumChannels; i++) {
+    for (i = 0; i < 16 * kNumChannels; i++)
+    {
         self->low_value_vector[i] = 10000;
         self->index_vector[i] = 0;
     }
@@ -602,12 +661,14 @@ int WebRtcVad_InitCore(VadInstT *self) {
     memset(self->hp_filter_state, 0, sizeof(self->hp_filter_state));
 
     // Initialize mean value memory, for WebRtcVad_FindMinimum().
-    for (i = 0; i < kNumChannels; i++) {
+    for (i = 0; i < kNumChannels; i++)
+    {
         self->mean_value[i] = 1600;
     }
 
     // Set aggressiveness mode to default (=|kDefaultMode|).
-    if (WebRtcVad_set_mode_core(self, kDefaultMode) != 0) {
+    if (WebRtcVad_set_mode_core(self, kDefaultMode) != 0)
+    {
         return -1;
     }
 
@@ -617,10 +678,12 @@ int WebRtcVad_InitCore(VadInstT *self) {
 }
 
 // Set aggressiveness mode
-int WebRtcVad_set_mode_core(VadInstT *self, int mode) {
+int WebRtcVad_set_mode_core(VadInstT *self, int mode)
+{
     int return_value = 0;
 
-    switch (mode) {
+    switch (mode)
+    {
         case 0:
             // Quality mode.
             memcpy(self->over_hang_max_1, kOverHangMax1Q,
@@ -677,7 +740,8 @@ int WebRtcVad_set_mode_core(VadInstT *self, int mode) {
 // probability for both speech and background noise.
 
 int WebRtcVad_CalcVad8khz(VadInstT *inst, const int16_t *speech_frame,
-                          size_t frame_length) {
+                          size_t frame_length)
+{
     int16_t feature_vector[kNumChannels], total_power;
 
     // Get power in the bands
@@ -690,13 +754,15 @@ int WebRtcVad_CalcVad8khz(VadInstT *inst, const int16_t *speech_frame,
     return inst->vad;
 }
 
-static __inline int16_t WebRtcSpl_GetSizeInBits(uint32_t n) {
+static __inline int16_t WebRtcSpl_GetSizeInBits(uint32_t n)
+{
     return (int16_t) 32 - (n == 0 ? (int16_t) 32 : (int16_t) __clz_uint32(n));
 }
 
 int16_t WebRtcSpl_GetScalingSquare(int16_t *in_vector,
                                    size_t in_vector_length,
-                                   size_t times) {
+                                   size_t times)
+{
     int16_t nbits = WebRtcSpl_GetSizeInBits((uint32_t) times);
     size_t i;
     int16_t smax = -1;
@@ -705,22 +771,27 @@ int16_t WebRtcSpl_GetScalingSquare(int16_t *in_vector,
     int16_t t;
     size_t looptimes = in_vector_length;
 
-    for (i = looptimes; i > 0; i--) {
+    for (i = looptimes; i > 0; i--)
+    {
         sabs = (*sptr > 0 ? *sptr++ : -*sptr++);
         smax = (sabs > smax ? sabs : smax);
     }
     t = NormW32(((int32_t) ((int32_t) (smax) * (int32_t) (smax))));
 
-    if (smax == 0) {
+    if (smax == 0)
+    {
         return 0; // Since norm(0) returns 0
-    } else {
+    }
+    else
+    {
         return (t > nbits) ? 0 : nbits - t;
     }
 }
 
 int32_t WebRtcSpl_Energy(int16_t *vector,
                          size_t vector_length,
-                         int *scale_factor) {
+                         int *scale_factor)
+{
     int32_t en = 0;
     size_t i;
     int scaling =
@@ -728,7 +799,8 @@ int32_t WebRtcSpl_Energy(int16_t *vector,
     size_t looptimes = vector_length;
     int16_t *vectorptr = vector;
 
-    for (i = 0; i < looptimes; i++) {
+    for (i = 0; i < looptimes; i++)
+    {
         en += (*vectorptr * *vectorptr) >> scaling;
         vectorptr++;
     }
@@ -749,7 +821,8 @@ static const int16_t kSmoothingUp = 32439;  // 0.99 in Q15.
 // of the five smallest values.
 int16_t WebRtcVad_FindMinimum(VadInstT *self,
                               int16_t feature_value,
-                              int channel) {
+                              int channel)
+{
     int i = 0, j = 0;
     int position = -1;
     // Offset to beginning of the 16 minimum values in memory.
@@ -766,12 +839,17 @@ int16_t WebRtcVad_FindMinimum(VadInstT *self,
 
     // Each value in |smallest_values| is getting 1 loop older. Update |age|, and
     // remove old values.
-    for (i = 0; i < 16; i++) {
-        if (age[i] != 100) {
+    for (i = 0; i < 16; i++)
+    {
+        if (age[i] != 100)
+        {
             age[i]++;
-        } else {
+        }
+        else
+        {
             // Too old value. Remove from memory and shift larger values downwards.
-            for (j = i; j < 16; j++) {
+            for (j = i; j < 16; j++)
+            {
                 smallest_values[j] = smallest_values[j + 1];
                 age[j] = age[j + 1];
             }
@@ -783,60 +861,101 @@ int16_t WebRtcVad_FindMinimum(VadInstT *self,
     // Check if |feature_value| is smaller than any of the values in
     // |smallest_values|. If so, find the |position| where to insert the new value
     // (|feature_value|).
-    if (feature_value < smallest_values[7]) {
-        if (feature_value < smallest_values[3]) {
-            if (feature_value < smallest_values[1]) {
-                if (feature_value < smallest_values[0]) {
+    if (feature_value < smallest_values[7])
+    {
+        if (feature_value < smallest_values[3])
+        {
+            if (feature_value < smallest_values[1])
+            {
+                if (feature_value < smallest_values[0])
+                {
                     position = 0;
-                } else {
+                }
+                else
+                {
                     position = 1;
                 }
-            } else if (feature_value < smallest_values[2]) {
+            }
+            else if (feature_value < smallest_values[2])
+            {
                 position = 2;
-            } else {
+            }
+            else
+            {
                 position = 3;
             }
-        } else if (feature_value < smallest_values[5]) {
-            if (feature_value < smallest_values[4]) {
+        }
+        else if (feature_value < smallest_values[5])
+        {
+            if (feature_value < smallest_values[4])
+            {
                 position = 4;
-            } else {
+            }
+            else
+            {
                 position = 5;
             }
-        } else if (feature_value < smallest_values[6]) {
+        }
+        else if (feature_value < smallest_values[6])
+        {
             position = 6;
-        } else {
+        }
+        else
+        {
             position = 7;
         }
-    } else if (feature_value < smallest_values[15]) {
-        if (feature_value < smallest_values[11]) {
-            if (feature_value < smallest_values[9]) {
-                if (feature_value < smallest_values[8]) {
+    }
+    else if (feature_value < smallest_values[15])
+    {
+        if (feature_value < smallest_values[11])
+        {
+            if (feature_value < smallest_values[9])
+            {
+                if (feature_value < smallest_values[8])
+                {
                     position = 8;
-                } else {
+                }
+                else
+                {
                     position = 9;
                 }
-            } else if (feature_value < smallest_values[10]) {
+            }
+            else if (feature_value < smallest_values[10])
+            {
                 position = 10;
-            } else {
+            }
+            else
+            {
                 position = 11;
             }
-        } else if (feature_value < smallest_values[13]) {
-            if (feature_value < smallest_values[12]) {
+        }
+        else if (feature_value < smallest_values[13])
+        {
+            if (feature_value < smallest_values[12])
+            {
                 position = 12;
-            } else {
+            }
+            else
+            {
                 position = 13;
             }
-        } else if (feature_value < smallest_values[14]) {
+        }
+        else if (feature_value < smallest_values[14])
+        {
             position = 14;
-        } else {
+        }
+        else
+        {
             position = 15;
         }
     }
 
     // If we have detected a new small value, insert it at the correct position
     // and shift larger values up.
-    if (position > -1) {
-        for (i = 15; i > position; i--) {
+    if (position > -1)
+    {
+        for (i = 15; i > position; i--)
+        {
             smallest_values[i] = smallest_values[i - 1];
             age[i] = age[i - 1];
         }
@@ -845,17 +964,24 @@ int16_t WebRtcVad_FindMinimum(VadInstT *self,
     }
 
     // Get |current_median|.
-    if (self->frame_counter > 2) {
+    if (self->frame_counter > 2)
+    {
         current_median = smallest_values[2];
-    } else if (self->frame_counter > 0) {
+    }
+    else if (self->frame_counter > 0)
+    {
         current_median = smallest_values[0];
     }
 
     // Smooth the median value.
-    if (self->frame_counter > 0) {
-        if (current_median < self->mean_value[channel]) {
+    if (self->frame_counter > 0)
+    {
+        if (current_median < self->mean_value[channel])
+        {
             alpha = kSmoothingDown;  // 0.2 in Q15.
-        } else {
+        }
+        else
+        {
             alpha = kSmoothingUp;  // 0.99 in Q15.
         }
     }
@@ -884,7 +1010,8 @@ static const int16_t kLog2Exp = 5909;  // log2(exp(1)) in Q12.
 int32_t WebRtcVad_GaussianProbability(int16_t input,
                                       int16_t mean,
                                       int16_t std,
-                                      int16_t *delta) {
+                                      int16_t *delta)
+{
     int16_t tmp16, inv_std, inv_std2, exp_value = 0;
     int32_t tmp32;
 
@@ -918,7 +1045,8 @@ int32_t WebRtcVad_GaussianProbability(int16_t input,
     // If the exponent is small enough to give a non-zero probability we calculate
     // |exp_value| ~= exp(-(x - m)^2 / (2 * s^2))
     //             ~= exp2(-log2(exp(1)) * |tmp32|).
-    if (tmp32 < kCompVar) {
+    if (tmp32 < kCompVar)
+    {
         // Calculate |tmp16| = log2(exp(1)) * |tmp32|, in Q10.
         // Q-domain: (Q12 * Q10) >> 12 = Q10.
         tmp16 = (int16_t) ((kLog2Exp * tmp32) >> 12);
@@ -960,7 +1088,8 @@ static const int16_t kOffsetVector[6] = {368, 368, 272, 176, 176, 176};
 // - data_out     [o]   : Output audio data in the frequency interval
 //                        80 - 250 Hz.
 static void HighPassFilter(const int16_t *data_in, size_t data_length,
-                           int16_t *filter_state, int16_t *data_out) {
+                           int16_t *filter_state, int16_t *data_out)
+{
     size_t i;
     const int16_t *in_ptr = data_in;
     int16_t *out_ptr = data_out;
@@ -975,7 +1104,8 @@ static void HighPassFilter(const int16_t *data_in, size_t data_length,
     // The all-pole section has a max amplification of a single sample of: 1.9931
     // Impulse response: 1.0000  0.4734 -0.1189 -0.2187 -0.0627   0.04532
 
-    for (i = 0; i < data_length; i++) {
+    for (i = 0; i < data_length; i++)
+    {
         // All-zero section (filter coefficients in Q14).
         tmp32 = kHpZeroCoefs[0] * *in_ptr;
         tmp32 += kHpZeroCoefs[1] * filter_state[0];
@@ -1003,7 +1133,8 @@ static void HighPassFilter(const int16_t *data_in, size_t data_length,
 // - data_out           [o]   : Output audio signal given in Q(-1).
 static void AllPassFilter(const int16_t *data_in, size_t data_length,
                           int16_t filter_coefficient, int16_t *filter_state,
-                          int16_t *data_out) {
+                          int16_t *data_out)
+{
     // The filter can only cause overflow (in the w16 output variable)
     // if more than 4 consecutive input numbers are of maximum value and
     // has the the same sign as the impulse responses first taps.
@@ -1015,7 +1146,8 @@ static void AllPassFilter(const int16_t *data_in, size_t data_length,
     int32_t tmp32 = 0;
     int32_t state32 = ((int32_t) (*filter_state) * (1 << 16));  // Q15
 
-    for (i = 0; i < data_length; i++) {
+    for (i = 0; i < data_length; i++)
+    {
         tmp32 = state32 + filter_coefficient * *data_in;
         tmp16 = (int16_t) (tmp32 >> 16);  // Q(-1)
         *data_out++ = tmp16;
@@ -1040,7 +1172,8 @@ static void AllPassFilter(const int16_t *data_in, size_t data_length,
 //                        The length is |data_length| / 2.
 static void SplitFilter(const int16_t *data_in, size_t data_length,
                         int16_t *upper_state, int16_t *lower_state,
-                        int16_t *hp_data_out, int16_t *lp_data_out) {
+                        int16_t *hp_data_out, int16_t *lp_data_out)
+{
     size_t i;
     size_t half_length = data_length >> 1;  // Downsampling by 2.
     int16_t tmp_out;
@@ -1054,7 +1187,8 @@ static void SplitFilter(const int16_t *data_in, size_t data_length,
                   lp_data_out);
 
     // Make LP and HP signals.
-    for (i = 0; i < half_length; i++) {
+    for (i = 0; i < half_length; i++)
+    {
         tmp_out = *hp_data_out;
         *hp_data_out++ -= *lp_data_out;
         *lp_data_out++ += tmp_out;
@@ -1074,7 +1208,8 @@ static void SplitFilter(const int16_t *data_in, size_t data_length,
 // - log_energy   [o]   : 10 * log10("energy of |data_in|") given in Q4.
 static void LogOfEnergy(const int16_t *data_in, size_t data_length,
                         int16_t offset, int16_t *total_energy,
-                        int16_t *log_energy) {
+                        int16_t *log_energy)
+{
     // |tot_rshifts| accumulates the number of right shifts performed on |energy|.
     int tot_rshifts = 0;
     // The |energy| will be normalized to 15 bits. We use unsigned integer because
@@ -1087,7 +1222,8 @@ static void LogOfEnergy(const int16_t *data_in, size_t data_length,
     energy = (uint32_t) WebRtcSpl_Energy((int16_t *) data_in, data_length,
                                          &tot_rshifts);
 
-    if (energy != 0) {
+    if (energy != 0)
+    {
         // By construction, normalizing to 15 bits is equivalent with 17 leading
         // zeros of an unsigned 32 bit value.
         int normalizing_rshifts = 17 - NormU32(energy);
@@ -1101,9 +1237,12 @@ static void LogOfEnergy(const int16_t *data_in, size_t data_length,
         // |tot_rshifts| is now the total number of right shifts performed on
         // |energy| after normalization. This means that |energy| is in
         // Q(-tot_rshifts).
-        if (normalizing_rshifts < 0) {
+        if (normalizing_rshifts < 0)
+        {
             energy <<= -normalizing_rshifts;
-        } else {
+        }
+        else
+        {
             energy >>= normalizing_rshifts;
         }
 
@@ -1135,10 +1274,13 @@ static void LogOfEnergy(const int16_t *data_in, size_t data_length,
         *log_energy = (int16_t) (((kLogConst * log2_energy) >> 19) +
                                  ((tot_rshifts * kLogConst) >> 9));
 
-        if (*log_energy < 0) {
+        if (*log_energy < 0)
+        {
             *log_energy = 0;
         }
-    } else {
+    }
+    else
+    {
         *log_energy = offset;
         return;
     }
@@ -1148,12 +1290,16 @@ static void LogOfEnergy(const int16_t *data_in, size_t data_length,
     // Update the approximate |total_energy| with the energy of |data_in|, if
     // |total_energy| has not exceeded |kMinEnergy|. |total_energy| is used as an
     // energy indicator in WebRtcVad_GmmProbability() in vad_core.c.
-    if (*total_energy <= kMinEnergy) {
-        if (tot_rshifts >= 0) {
+    if (*total_energy <= kMinEnergy)
+    {
+        if (tot_rshifts >= 0)
+        {
             // We know by construction that the |energy| > |kMinEnergy| in Q0, so add
             // an arbitrary value such that |total_energy| exceeds |kMinEnergy|.
             *total_energy += kMinEnergy + 1;
-        } else {
+        }
+        else
+        {
             // By construction |energy| is represented by 15 bits, hence any number of
             // right shifted |energy| will fit in an int16_t. In addition, adding the
             // value to |total_energy| is wrap around safe as long as
@@ -1164,7 +1310,8 @@ static void LogOfEnergy(const int16_t *data_in, size_t data_length,
 }
 
 int16_t WebRtcVad_CalculateFeatures(VadInstT *self, const int16_t *data_in,
-                                    size_t data_length, int16_t *features) {
+                                    size_t data_length, int16_t *features)
+{
     int16_t total_energy = 0;
     // We expect |data_length| to be 80, 160 or 240 samples, which corresponds to
     // 10, 20 or 30 ms in 8 kHz. Therefore, the intermediate downsampled data will
@@ -1252,30 +1399,36 @@ int16_t WebRtcVad_CalculateFeatures(VadInstT *self, const int16_t *data_in,
 }
 
 
-VadInst *WebRtcVad_Create() {
+VadInst *WebRtcVad_Create()
+{
     VadInstT *self = (VadInstT *) malloc(sizeof(VadInstT));
     self->init_flag = 0;
     return (VadInst *) self;
 }
 
-void WebRtcVad_Free(VadInst *handle) {
+void WebRtcVad_Free(VadInst *handle)
+{
     free(handle);
 }
 
 // TODO(bjornv): Move WebRtcVad_InitCore() code here.
-int WebRtcVad_Init(VadInst *handle) {
+int WebRtcVad_Init(VadInst *handle)
+{
     // Initialize the core VAD component.
     return WebRtcVad_InitCore((VadInstT *) handle);
 }
 
 // TODO(bjornv): Move WebRtcVad_set_mode_core() code here.
-int WebRtcVad_set_mode(VadInst *handle, int mode) {
+int WebRtcVad_set_mode(VadInst *handle, int mode)
+{
     VadInstT *self = (VadInstT *) handle;
 
-    if (handle == NULL) {
+    if (handle == NULL)
+    {
         return -1;
     }
-    if (self->init_flag != kInitCheck) {
+    if (self->init_flag != kInitCheck)
+    {
         return -1;
     }
 
@@ -1283,31 +1436,39 @@ int WebRtcVad_set_mode(VadInst *handle, int mode) {
 }
 
 int WebRtcVad_Process(VadInst *handle, int fs, const int16_t *audio_frame,
-                      size_t frame_length, int keep_weight) {
+                      size_t frame_length, int keep_weight)
+{
     int vad = -1;
     VadInstT *self = (VadInstT *) handle;
 
-    if (handle == NULL) {
+    if (handle == NULL)
+    {
         return vad;
     }
 
-    if (self->init_flag != kInitCheck) {
+    if (self->init_flag != kInitCheck)
+    {
         return vad;
     }
-    if (audio_frame == NULL) {
+    if (audio_frame == NULL)
+    {
         return vad;
     }
     if (fs < 8000)
         return vad;
-    if (fs == 8000) {
+    if (fs == 8000)
+    {
         vad = WebRtcVad_CalcVad8khz(self, audio_frame, frame_length);
-    } else {
+    }
+    else
+    {
         int16_t speech_nb[240];  // 30 ms in 8 kHz.
         const size_t kFrameLen10ms = (size_t) (fs / 100);
         const size_t kFrameLen10ms8khz = 80;
         size_t num_10ms_frames = frame_length / kFrameLen10ms;
         int i = 0;
-        for (i = 0; i < num_10ms_frames; i++) {
+        for (i = 0; i < num_10ms_frames; i++)
+        {
             resampleData(audio_frame, fs, kFrameLen10ms, &speech_nb[i * kFrameLen10ms8khz],
                          8000);
         }
@@ -1315,8 +1476,11 @@ int WebRtcVad_Process(VadInst *handle, int fs, const int16_t *audio_frame,
         // Do VAD on an 8 kHz signal
         vad = WebRtcVad_CalcVad8khz(self, speech_nb, new_frame_length);
     }
-    if (keep_weight != 0) {
-        if (vad > 0) {
+
+    if (keep_weight != 0)
+    {
+        if (vad > 0)
+        {
             vad = 1;
         }
     }
